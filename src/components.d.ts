@@ -12,20 +12,6 @@ export namespace Components {
          */
         "apiBase": string;
     }
-    interface MyComponent {
-        /**
-          * The first name
-         */
-        "first"?: string;
-        /**
-          * The last name
-         */
-        "last"?: string;
-        /**
-          * The middle name
-         */
-        "middle"?: string;
-    }
 }
 export interface KcrpMededuTrainingListCustomEvent<T> extends CustomEvent<T> {
     detail: T;
@@ -50,15 +36,8 @@ declare global {
         prototype: HTMLKcrpMededuTrainingListElement;
         new (): HTMLKcrpMededuTrainingListElement;
     };
-    interface HTMLMyComponentElement extends Components.MyComponent, HTMLStencilElement {
-    }
-    var HTMLMyComponentElement: {
-        prototype: HTMLMyComponentElement;
-        new (): HTMLMyComponentElement;
-    };
     interface HTMLElementTagNameMap {
         "kcrp-mededu-training-list": HTMLKcrpMededuTrainingListElement;
-        "my-component": HTMLMyComponentElement;
     }
 }
 declare namespace LocalJSX {
@@ -70,33 +49,13 @@ declare namespace LocalJSX {
         "onTraining-clicked"?: (event: KcrpMededuTrainingListCustomEvent<string>) => void;
         "onTraining-create-clicked"?: (event: KcrpMededuTrainingListCustomEvent<void>) => void;
     }
-    interface MyComponent {
-        /**
-          * The first name
-         */
-        "first"?: string;
-        /**
-          * The last name
-         */
-        "last"?: string;
-        /**
-          * The middle name
-         */
-        "middle"?: string;
-    }
 
     interface KcrpMededuTrainingListAttributes {
         "apiBase": string;
     }
-    interface MyComponentAttributes {
-        "first": string;
-        "middle": string;
-        "last": string;
-    }
 
     interface IntrinsicElements {
         "kcrp-mededu-training-list": Omit<KcrpMededuTrainingList, keyof KcrpMededuTrainingListAttributes> & { [K in keyof KcrpMededuTrainingList & keyof KcrpMededuTrainingListAttributes]?: KcrpMededuTrainingList[K] } & { [K in keyof KcrpMededuTrainingList & keyof KcrpMededuTrainingListAttributes as `attr:${K}`]?: KcrpMededuTrainingListAttributes[K] } & { [K in keyof KcrpMededuTrainingList & keyof KcrpMededuTrainingListAttributes as `prop:${K}`]?: KcrpMededuTrainingList[K] };
-        "my-component": Omit<MyComponent, keyof MyComponentAttributes> & { [K in keyof MyComponent & keyof MyComponentAttributes]?: MyComponent[K] } & { [K in keyof MyComponent & keyof MyComponentAttributes as `attr:${K}`]?: MyComponentAttributes[K] } & { [K in keyof MyComponent & keyof MyComponentAttributes as `prop:${K}`]?: MyComponent[K] };
     }
 }
 export { LocalJSX as JSX };
@@ -104,7 +63,6 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             "kcrp-mededu-training-list": LocalJSX.IntrinsicElements["kcrp-mededu-training-list"] & JSXBase.HTMLAttributes<HTMLKcrpMededuTrainingListElement>;
-            "my-component": LocalJSX.IntrinsicElements["my-component"] & JSXBase.HTMLAttributes<HTMLMyComponentElement>;
         }
     }
 }
