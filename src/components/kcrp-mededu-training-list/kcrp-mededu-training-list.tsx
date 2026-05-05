@@ -1,5 +1,7 @@
 import { Component, Event, EventEmitter, Host, Prop, State, h } from '@stencil/core';
 
+import { Configuration, ResponseError, Training as ApiTraining, TrainingsApi } from '../../api/mededu';
+
 import '@material/web/button/filled-button';
 import '@material/web/button/filled-tonal-button';
 import '@material/web/chips/assist-chip';
@@ -152,14 +154,11 @@ export class KcrpMededuTrainingList {
         return;
       }
 
-      const response = await fetch(`${this.apiBase.replace(/\/$/, '')}/trainings`);
-      if (!response.ok) {
-        throw new Error(`${response.status} ${response.statusText}`);
-      }
-      this.trainings = await response.json();
+      const trainings = await this.trainingsApi().listTrainings({});
+      this.trainings = trainings.map(training => this.fromApiTraining(training));
     } catch (error: any) {
       this.trainings = sampleTrainings;
-      this.errorMessage = `Nepodarilo sa načítať školenia z API: ${error.message || 'neznáma chyba'}`;
+      this.errorMessage = `Nepodarilo sa načítať školenia z API: ${this.apiErrorMessage(error)}`;
     } finally {
       this.loading = false;
     }
@@ -195,6 +194,49 @@ export class KcrpMededuTrainingList {
     }
 
     return `${this.trainingHrefBase.replace(/\/$/, '')}/${encodeURIComponent(trainingId)}`;
+  }
+
+  private trainingsApi() {
+    return new TrainingsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
+  }
+
+  private fromApiTraining(training: ApiTraining): Training {
+    return {
+      id: training.id,
+      title: training.title,
+      type: training.type,
+      department: training.department,
+      startAt: this.toIsoDate(training.startAt),
+      capacity: Number(training.capacity || 1),
+      lecturer: training.lecturer,
+      location: training.location || '',
+      onlineLink: training.onlineLink || '',
+      requirements: training.requirements || '',
+      status: (training.status || 'planned') as TrainingStatus,
+      occupied: Number(training.occupied || 0),
+      waitlisted: Number(training.waitlisted || 0),
+    };
+  }
+
+  private toIsoDate(value: Date | string | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toISOString();
+  }
+
+  private apiErrorMessage(error: unknown): string {
+    if (error instanceof ResponseError) {
+      return `${error.response.status} ${error.response.statusText}`;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'neznáma chyba';
   }
 }
 

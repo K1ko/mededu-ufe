@@ -1,5 +1,15 @@
 import { Component, Event as StencilEvent, EventEmitter, Host, Prop, State, h } from '@stencil/core';
 
+import {
+  Configuration,
+  ResponseError,
+  Training as ApiTraining,
+  TrainingInput,
+  TrainingStatus as ApiTrainingStatus,
+  TrainingType as ApiTrainingType,
+  TrainingsApi,
+} from '../../api/mededu';
+
 import '@material/web/button/filled-button';
 import '@material/web/button/outlined-button';
 import '@material/web/icon/icon';
@@ -239,14 +249,10 @@ export class KcrpMededuTrainingEditor {
         return;
       }
 
-      const response = await fetch(`${this.apiBase.replace(/\/$/, '')}/trainings/${encodeURIComponent(this.trainingId)}`);
-      if (!response.ok) {
-        throw new Error(`${response.status} ${response.statusText}`);
-      }
-      this.form = this.fromApiTraining(await response.json());
+      this.form = this.fromApiTraining(await this.trainingsApi().getTraining({ trainingId: this.trainingId }));
     } catch (error: any) {
       this.form = sampleTraining(this.trainingId);
-      this.errorMessage = `Nepodarilo sa načítať školenie z API: ${error.message || 'neznáma chyba'}`;
+      this.errorMessage = `Nepodarilo sa načítať školenie z API: ${this.apiErrorMessage(error)}`;
     } finally {
       this.loading = false;
     }
@@ -269,27 +275,24 @@ export class KcrpMededuTrainingEditor {
 
     this.loading = true;
     try {
-      const payload = this.toApiTraining();
+      const payload = this.toApiTrainingInput();
+      let savedTraining: ApiTraining | undefined;
 
       if (this.apiBase) {
         const isNew = this.trainingId === '@new';
-        const url = isNew
-          ? `${this.apiBase.replace(/\/$/, '')}/trainings`
-          : `${this.apiBase.replace(/\/$/, '')}/trainings/${encodeURIComponent(this.trainingId)}`;
-        const response = await fetch(url, {
-          method: isNew ? 'POST' : 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!response.ok) {
-          throw new Error(`${response.status} ${response.statusText}`);
-        }
+        savedTraining = isNew
+          ? await this.trainingsApi().createTraining({ trainingInput: payload })
+          : await this.trainingsApi().updateTraining({ trainingId: this.trainingId, trainingInput: payload });
+      }
+
+      if (savedTraining) {
+        this.form = this.fromApiTraining(savedTraining);
       }
 
       this.savedMessage = 'Školenie bolo uložené.';
-      this.trainingSaved.emit(payload);
+      this.trainingSaved.emit(this.form);
     } catch (error: any) {
-      this.errorMessage = `Nepodarilo sa uložiť školenie: ${error.message || 'neznáma chyba'}`;
+      this.errorMessage = `Nepodarilo sa uložiť školenie: ${this.apiErrorMessage(error)}`;
     } finally {
       this.loading = false;
     }
@@ -332,7 +335,11 @@ export class KcrpMededuTrainingEditor {
     };
   }
 
-  private fromApiTraining(training: any): TrainingForm {
+  private trainingsApi() {
+    return new TrainingsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
+  }
+
+  private fromApiTraining(training: ApiTraining): TrainingForm {
     return {
       id: training.id,
       title: training.title || '',
@@ -345,29 +352,49 @@ export class KcrpMededuTrainingEditor {
       onlineLink: training.onlineLink || '',
       description: training.description || '',
       requirements: training.requirements || '',
-      status: training.status || 'planned',
+      status: (training.status || 'planned') as TrainingStatus,
     };
   }
 
-  private toApiTraining(): TrainingForm {
+  private toApiTrainingInput(): TrainingInput {
     return {
-      ...this.form,
-      id: this.trainingId === '@new' ? this.form.id : this.trainingId,
-      startAt: this.form.startAt ? new Date(this.form.startAt).toISOString() : '',
+      title: this.form.title,
+      type: this.form.type as ApiTrainingType,
+      department: this.form.department,
+      startAt: this.form.startAt ? new Date(this.form.startAt) : new Date(),
+      capacity: this.form.capacity,
+      lecturer: this.form.lecturer,
+      location: this.form.location,
+      onlineLink: this.form.onlineLink,
+      description: this.form.description,
+      requirements: this.form.requirements,
+      status: this.form.status as ApiTrainingStatus,
     };
   }
 
-  private toDatetimeLocal(value: string): string {
+  private toDatetimeLocal(value: Date | string): string {
     if (!value) {
       return '';
     }
 
-    const date = new Date(value);
+    const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) {
-      return value;
+      return String(value);
     }
 
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+
+  private apiErrorMessage(error: unknown): string {
+    if (error instanceof ResponseError) {
+      return `${error.response.status} ${error.response.statusText}`;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'neznáma chyba';
   }
 }
 

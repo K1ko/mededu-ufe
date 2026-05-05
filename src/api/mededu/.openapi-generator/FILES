@@ -1,0 +1,10 @@
+apis/TrainingsApi.ts
+apis/index.ts
+index.ts
+models/ErrorResponse.ts
+models/Training.ts
+models/TrainingInput.ts
+models/TrainingStatus.ts
+models/TrainingType.ts
+models/index.ts
+runtime.ts
