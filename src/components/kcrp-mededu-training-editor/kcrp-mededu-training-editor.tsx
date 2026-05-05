@@ -58,6 +58,7 @@ export class KcrpMededuTrainingEditor {
             <h2>{isNew ? 'Nové školenie' : 'Úprava školenia'}</h2>
             <p>{isNew ? 'Vytvorenie položky v katalógu interného vzdelávania' : 'Aktualizácia termínu, kapacity a organizačných údajov'}</p>
           </div>
+          <span>{isNew ? 'Nový záznam' : this.form.status}</span>
         </header>
 
         {this.loading ? <md-linear-progress indeterminate></md-linear-progress> : undefined}
@@ -77,7 +78,9 @@ export class KcrpMededuTrainingEditor {
         ) : undefined}
 
         <form onSubmit={(event) => this.saveTraining(event)}>
-          <section class="grid">
+          <section class="form-section">
+            <h3>Základné údaje</h3>
+            <div class="grid">
             <md-outlined-text-field
               required
               label="Názov školenia"
@@ -112,7 +115,12 @@ export class KcrpMededuTrainingEditor {
               onInput={(event: InputEvent) => this.updateField('department', this.eventValue(event))}>
               <md-icon slot="leading-icon">local_hospital</md-icon>
             </md-outlined-text-field>
+            </div>
+          </section>
 
+          <section class="form-section">
+            <h3>Termín a organizácia</h3>
+            <div class="grid">
             <md-outlined-text-field
               required
               type="datetime-local"
@@ -153,7 +161,12 @@ export class KcrpMededuTrainingEditor {
               onInput={(event: InputEvent) => this.updateField('onlineLink', this.eventValue(event))}>
               <md-icon slot="leading-icon">video_call</md-icon>
             </md-outlined-text-field>
+            </div>
+          </section>
 
+          <section class="form-section">
+            <h3>Stav a požiadavky</h3>
+            <div class="grid single">
             <md-outlined-select
               label="Stav"
               value={this.form.status}
@@ -168,7 +181,7 @@ export class KcrpMededuTrainingEditor {
                 <div slot="headline">Archivované</div>
               </md-select-option>
             </md-outlined-select>
-          </section>
+            </div>
 
           <md-outlined-text-field
             class="wide"
@@ -187,6 +200,7 @@ export class KcrpMededuTrainingEditor {
             value={this.form.requirements}
             onInput={(event: InputEvent) => this.updateField('requirements', this.eventValue(event))}>
           </md-outlined-text-field>
+          </section>
 
           <div class="actions">
             {!isNew ? (

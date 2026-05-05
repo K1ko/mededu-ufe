@@ -1,21 +1,27 @@
 :host {
-  --mededu-border: #d9e2e8;
+  --mededu-accent: #0f766e;
+  --mededu-accent-strong: #115e59;
+  --mededu-border: #d7dee8;
+  --mededu-danger: #b42318;
+  --mededu-ink: #17212b;
   --mededu-muted: #61717f;
-  --mededu-surface: #f7faf9;
-  color: #1f2933;
+  --mededu-panel: #ffffff;
+  --mededu-soft: #eef6f5;
+  color: var(--mededu-ink);
   display: block;
   font-family: Roboto, Arial, sans-serif;
 }
 
 header {
-  align-items: center;
-  background: var(--mededu-surface);
+  align-items: flex-start;
+  background: linear-gradient(135deg, #f8fbfb 0%, #eef6f5 58%, #f8fafc 100%);
   border: 1px solid var(--mededu-border);
-  border-radius: 8px 8px 0 0;
+  border-radius: 8px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
   display: flex;
   gap: 16px;
   justify-content: space-between;
-  padding: 16px;
+  padding: 18px;
 }
 
 h2,
@@ -24,8 +30,9 @@ p {
 }
 
 h2 {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 p,
@@ -33,59 +40,158 @@ p,
   color: var(--mededu-muted);
 }
 
+.summary {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(92px, 1fr));
+  margin-left: auto;
+  min-width: 330px;
+}
+
+.summary span {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 8px;
+  color: #475569;
+  display: grid;
+  font-size: 0.78rem;
+  gap: 2px;
+  padding: 10px 12px;
+}
+
+.summary strong {
+  color: var(--mededu-accent-strong);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
 .toolbar {
   align-items: center;
-  border-left: 1px solid var(--mededu-border);
-  border-right: 1px solid var(--mededu-border);
+  background: var(--mededu-panel);
+  border: 1px solid var(--mededu-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
   display: flex;
   gap: 12px;
-  padding: 12px 16px;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 12px;
 }
 
 md-filled-text-field {
-  max-width: 360px;
+  max-width: 430px;
   width: 100%;
 }
 
+md-filled-button {
+  --md-filled-button-container-color: var(--mededu-accent);
+  --md-filled-button-container-shape: 8px;
+}
+
+md-filled-tonal-button {
+  --md-filled-tonal-button-container-color: #e8eef8;
+  --md-filled-tonal-button-label-text-color: #1d4ed8;
+  --md-filled-tonal-button-container-shape: 8px;
+}
+
 md-list {
+  background: transparent;
   border: 1px solid var(--mededu-border);
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 8px;
 }
 
 md-list-item {
-  border-top: 1px solid #edf1f4;
+  --md-list-item-container-color: var(--mededu-panel);
+  --md-list-item-hover-state-layer-color: var(--mededu-accent);
+  --md-list-item-hover-state-layer-opacity: 0.06;
+  border: 1px solid #e7edf3;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-md-list-item:first-child {
-  border-top: 0;
+md-list-item::part(focus-ring) {
+  border-radius: 8px;
 }
 
 .chips {
   align-items: center;
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 md-assist-chip {
   --md-assist-chip-container-shape: 6px;
+  --md-assist-chip-label-text-color: #334155;
+}
+
+.department {
+  color: var(--mededu-accent-strong);
+  font-weight: 600;
+}
+
+[slot='supporting-text'] {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+[slot='supporting-text'] span:not(:last-child)::after {
+  color: #94a3b8;
+  content: '/';
+  margin-left: 8px;
+}
+
+.occupancy {
+  color: #334155;
+  display: grid;
+  font-size: 0.78rem;
+  gap: 5px;
+  min-width: 88px;
+}
+
+.occupancy span {
+  font-weight: 700;
+  text-align: right;
+}
+
+.meter {
+  background: #e2e8f0;
+  border-radius: 999px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.meter span {
+  background: var(--mededu-accent);
+  display: block;
+  height: 100%;
+}
+
+.occupancy.full .meter span {
+  background: #d97706;
 }
 
 .error {
   align-items: center;
   background: #fff1f0;
-  border-left: 1px solid var(--mededu-border);
-  border-right: 1px solid var(--mededu-border);
-  color: #9f1d12;
+  border: 1px solid #ffd2cc;
+  border-radius: 8px;
+  color: var(--mededu-danger);
   display: flex;
   gap: 8px;
+  margin-top: 14px;
   padding: 10px 16px;
 }
 
 .empty {
   border: 1px solid var(--mededu-border);
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px;
+  margin-top: 14px;
   padding: 18px;
 }
 
@@ -94,6 +200,13 @@ md-assist-chip {
   .toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .summary {
+    grid-template-columns: 1fr;
+    margin-left: 0;
+    min-width: 0;
+    width: 100%;
   }
 
   .chips {

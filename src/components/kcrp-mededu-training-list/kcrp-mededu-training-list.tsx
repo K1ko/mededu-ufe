@@ -51,6 +51,9 @@ export class KcrpMededuTrainingList {
 
   render() {
     const visibleTrainings = this.filteredTrainings();
+    const plannedTrainings = this.trainings.filter(training => training.status === 'planned').length;
+    const freeSeats = this.trainings.reduce((sum, training) => sum + Math.max(training.capacity - training.occupied, 0), 0);
+    const waitlisted = this.trainings.reduce((sum, training) => sum + training.waitlisted, 0);
 
     return (
       <Host>
@@ -58,6 +61,11 @@ export class KcrpMededuTrainingList {
           <div>
             <h2>MedEdu školenia</h2>
             <p>Katalóg interného vzdelávania nemocničného personálu</p>
+          </div>
+          <div class="summary" aria-label="Prehľad katalógu">
+            <span><strong>{plannedTrainings}</strong> plánované</span>
+            <span><strong>{freeSeats}</strong> voľné miesta</span>
+            <span><strong>{waitlisted}</strong> náhradníci</span>
           </div>
           <md-filled-button href={this.createHref || undefined} onClick={() => this.createTraining()}>
             <md-icon slot="icon">add</md-icon>
@@ -101,16 +109,27 @@ export class KcrpMededuTrainingList {
   private renderTraining(training: Training) {
     const startsAt = new Date(training.startAt);
     const place = training.location || training.onlineLink || 'miesto bude doplnené';
+    const occupancy = Math.min(Math.round((training.occupied / training.capacity) * 100), 100);
+    const isFull = training.occupied >= training.capacity;
 
     return (
       <md-list-item href={this.trainingHref(training.id) || undefined} onClick={() => this.openTraining(training.id)}>
         <md-icon slot="start">{training.onlineLink ? 'video_call' : 'school'}</md-icon>
         <div slot="headline">{training.title}</div>
         <div slot="supporting-text">
-          {training.department} · {startsAt.toLocaleString()} · {place} · lektor: {training.lecturer}
+          <span class="department">{training.department}</span>
+          <span>{startsAt.toLocaleString()}</span>
+          <span>{place}</span>
+          <span>lektor: {training.lecturer}</span>
         </div>
         <div slot="end" class="chips">
-          <md-assist-chip label={`${training.occupied}/${training.capacity} miest`}>
+          <div class={{ occupancy: true, full: isFull }}>
+            <span>{training.occupied}/{training.capacity}</span>
+            <div class="meter" aria-label={`Obsadenosť ${occupancy} percent`}>
+              <span style={{ width: `${occupancy}%` }}></span>
+            </div>
+          </div>
+          <md-assist-chip label={isFull ? 'plné' : `${training.capacity - training.occupied} voľné`}>
             <md-icon slot="icon">groups</md-icon>
           </md-assist-chip>
           {training.waitlisted > 0 ? (
