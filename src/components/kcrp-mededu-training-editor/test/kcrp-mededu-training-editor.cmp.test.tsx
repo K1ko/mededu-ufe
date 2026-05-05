@@ -10,7 +10,7 @@ describe('kcrp-mededu-training-editor', () => {
     expect(fieldLabels).toContain('Názov školenia');
     expect(fieldLabels).toContain('Kapacita');
     expect(textFields.length).toBeGreaterThanOrEqual(8);
-    expect(root.shadowRoot.querySelectorAll('md-outlined-select').length).toBe(2);
+    expect(root.shadowRoot.querySelectorAll('md-outlined-select').length).toBe(3);
     expect(root.shadowRoot.querySelectorAll('md-filled-button').length).toBe(1);
   });
 });

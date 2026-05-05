@@ -73,6 +73,7 @@ export class KcrpMededuTrainingsApp {
         onTraining-cancelled={() => this.navigate('')}
         onTraining-saved={() => this.navigate('')}
         onTraining-archived={() => this.navigate('')}
+        onTraining-deleted={() => this.navigate('')}
       ></kcrp-mededu-training-editor>
     );
   }

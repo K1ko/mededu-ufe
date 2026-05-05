@@ -143,9 +143,12 @@ md-outlined-select {
 }
 
 md-outlined-button,
+md-filled-tonal-button,
 md-filled-button {
   --md-filled-button-container-color: var(--mededu-accent);
   --md-filled-button-container-shape: 8px;
+  --md-filled-tonal-button-container-shape: 8px;
+  --md-filled-tonal-button-label-text-color: var(--mededu-danger);
   --md-outlined-button-container-shape: 8px;
   --md-outlined-button-outline-color: #b7c4d1;
 }

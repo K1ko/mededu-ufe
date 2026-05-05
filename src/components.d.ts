@@ -60,6 +60,7 @@ declare global {
         "training-saved": TrainingForm;
         "training-cancelled": void;
         "training-archived": string;
+        "training-deleted": string;
     }
     interface HTMLKcrpMededuTrainingEditorElement extends Components.KcrpMededuTrainingEditor, HTMLStencilElement {
         addEventListener<K extends keyof HTMLKcrpMededuTrainingEditorElementEventMap>(type: K, listener: (this: HTMLKcrpMededuTrainingEditorElement, ev: KcrpMededuTrainingEditorCustomEvent<HTMLKcrpMededuTrainingEditorElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -117,6 +118,7 @@ declare namespace LocalJSX {
         "backHref"?: string;
         "onTraining-archived"?: (event: KcrpMededuTrainingEditorCustomEvent<string>) => void;
         "onTraining-cancelled"?: (event: KcrpMededuTrainingEditorCustomEvent<void>) => void;
+        "onTraining-deleted"?: (event: KcrpMededuTrainingEditorCustomEvent<string>) => void;
         "onTraining-saved"?: (event: KcrpMededuTrainingEditorCustomEvent<TrainingForm>) => void;
         /**
           * @default '@new'

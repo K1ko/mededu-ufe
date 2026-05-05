@@ -20,6 +20,7 @@
 | -------------------- | ----------- | --------------------------- |
 | `training-archived`  |             | `CustomEvent<string>`       |
 | `training-cancelled` |             | `CustomEvent<void>`         |
+| `training-deleted`   |             | `CustomEvent<string>`       |
 | `training-saved`     |             | `CustomEvent<TrainingForm>` |
 
 

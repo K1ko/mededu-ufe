@@ -11,6 +11,8 @@ servers:
 tags:
   - name: trainings
     description: Katalog internych skoleni
+  - name: departments
+    description: Oddelenia a odbornosti pouzivane pri planovani skoleni
 
 paths:
   /trainings:
@@ -140,6 +142,28 @@ paths:
           description: Skolenie bolo odstranene.
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /departments:
+    get:
+      tags:
+        - departments
+      operationId: listDepartments
+      summary: Zoznam oddeleni
+      description: Vrati zoznam oddeleni a odbornosti, pre ktore je mozne planovat skolenia.
+      responses:
+        "200":
+          description: Zoznam oddeleni bol nacitany.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              examples:
+                default:
+                  $ref: "#/components/examples/DepartmentListExample"
         "500":
           $ref: "#/components/responses/ServerError"
 
@@ -381,3 +405,12 @@ components:
         description: Interne skolenie pre personal urgentneho prijmu.
         requirements: Zamestnanecky preukaz
         status: planned
+    DepartmentListExample:
+      value:
+        - Urgent
+        - JIS
+        - Chirurgia
+        - Interné
+        - Pediatria
+        - Radiológia
+        - Anestéziológia

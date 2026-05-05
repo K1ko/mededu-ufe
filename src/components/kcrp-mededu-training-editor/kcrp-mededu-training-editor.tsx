@@ -2,6 +2,7 @@ import { Component, Event as StencilEvent, EventEmitter, Host, Prop, State, h } 
 
 import {
   Configuration,
+  DepartmentsApi,
   ResponseError,
   Training as ApiTraining,
   TrainingInput,
@@ -11,6 +12,7 @@ import {
 } from '../../api/mededu';
 
 import '@material/web/button/filled-button';
+import '@material/web/button/filled-tonal-button';
 import '@material/web/button/outlined-button';
 import '@material/web/icon/icon';
 import '@material/web/progress/linear-progress';
@@ -48,14 +50,19 @@ export class KcrpMededuTrainingEditor {
   @StencilEvent({ eventName: 'training-saved' }) trainingSaved: EventEmitter<TrainingForm>;
   @StencilEvent({ eventName: 'training-cancelled' }) trainingCancelled: EventEmitter<void>;
   @StencilEvent({ eventName: 'training-archived' }) trainingArchived: EventEmitter<string>;
+  @StencilEvent({ eventName: 'training-deleted' }) trainingDeleted: EventEmitter<string>;
 
   @State() private form: TrainingForm = this.emptyTraining();
   @State() private loading = false;
   @State() private errorMessage = '';
   @State() private savedMessage = '';
+  @State() private departments: string[] = sampleDepartments;
 
   async componentWillLoad() {
-    await this.loadTraining();
+    await Promise.all([
+      this.loadTraining(),
+      this.loadDepartments(),
+    ]);
   }
 
   render() {
@@ -118,13 +125,7 @@ export class KcrpMededuTrainingEditor {
               </md-select-option>
             </md-outlined-select>
 
-            <md-outlined-text-field
-              required
-              label="Oddelenie / odbornosť"
-              value={this.form.department}
-              onInput={(event: InputEvent) => this.updateField('department', this.eventValue(event))}>
-              <md-icon slot="leading-icon">local_hospital</md-icon>
-            </md-outlined-text-field>
+            {this.renderDepartmentField()}
             </div>
           </section>
 
@@ -214,6 +215,12 @@ export class KcrpMededuTrainingEditor {
 
           <div class="actions">
             {!isNew ? (
+              <md-filled-tonal-button type="button" onClick={() => this.deleteTraining()}>
+                <md-icon slot="icon">delete</md-icon>
+                Odstrániť
+              </md-filled-tonal-button>
+            ) : undefined}
+            {!isNew ? (
               <md-outlined-button type="button" onClick={() => this.archiveTraining()}>
                 <md-icon slot="icon">archive</md-icon>
                 Archivovať
@@ -256,6 +263,37 @@ export class KcrpMededuTrainingEditor {
     } finally {
       this.loading = false;
     }
+  }
+
+  private async loadDepartments() {
+    try {
+      if (!this.apiBase) {
+        this.departments = sampleDepartments;
+        return;
+      }
+
+      const departments = await this.departmentsApi().listDepartments();
+      this.departments = departments.length > 0 ? departments : sampleDepartments;
+    } catch {
+      this.departments = sampleDepartments;
+    }
+  }
+
+  private renderDepartmentField() {
+    return (
+      <md-outlined-select
+        required
+        label="Oddelenie / odbornosť"
+        value={this.form.department}
+        onInput={(event: InputEvent) => this.updateField('department', this.eventValue(event))}>
+        <md-icon slot="leading-icon">local_hospital</md-icon>
+        {this.departmentOptions().map(department => (
+          <md-select-option value={department} selected={department === this.form.department}>
+            <div slot="headline">{department}</div>
+          </md-select-option>
+        ))}
+      </md-outlined-select>
+    );
   }
 
   private async saveTraining(event: Event) {
@@ -304,6 +342,32 @@ export class KcrpMededuTrainingEditor {
     this.trainingArchived.emit(this.trainingId);
   }
 
+  private async deleteTraining() {
+    this.errorMessage = '';
+    this.savedMessage = '';
+
+    if (this.trainingId === '@new') {
+      return;
+    }
+
+    if (!window.confirm('Naozaj odstrániť školenie?')) {
+      return;
+    }
+
+    this.loading = true;
+    try {
+      if (this.apiBase) {
+        await this.trainingsApi().deleteTraining({ trainingId: this.trainingId });
+      }
+
+      this.trainingDeleted.emit(this.trainingId);
+    } catch (error: any) {
+      this.errorMessage = `Nepodarilo sa odstrániť školenie: ${this.apiErrorMessage(error)}`;
+    } finally {
+      this.loading = false;
+    }
+  }
+
   private updateField<Field extends keyof TrainingForm>(field: Field, value: TrainingForm[Field]) {
     this.form = { ...this.form, [field]: value };
     this.savedMessage = '';
@@ -337,6 +401,20 @@ export class KcrpMededuTrainingEditor {
 
   private trainingsApi() {
     return new TrainingsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
+  }
+
+  private departmentsApi() {
+    return new DepartmentsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
+  }
+
+  private departmentOptions() {
+    const currentDepartment = this.form.department.trim();
+
+    if (currentDepartment && !this.departments.includes(currentDepartment)) {
+      return [currentDepartment, ...this.departments];
+    }
+
+    return this.departments;
   }
 
   private fromApiTraining(training: ApiTraining): TrainingForm {
@@ -414,3 +492,13 @@ function sampleTraining(id: string): TrainingForm {
     status: 'planned',
   };
 }
+
+const sampleDepartments = [
+  'Urgent',
+  'JIS',
+  'Chirurgia',
+  'Interné',
+  'Pediatria',
+  'Radiológia',
+  'Anestéziológia',
+];

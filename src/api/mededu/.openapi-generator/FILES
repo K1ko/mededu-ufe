@@ -1,3 +1,4 @@
+apis/DepartmentsApi.ts
 apis/TrainingsApi.ts
 apis/index.ts
 index.ts
