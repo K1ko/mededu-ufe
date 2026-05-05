@@ -34,6 +34,8 @@ interface Training {
 })
 export class KcrpMededuTrainingList {
   @Prop() apiBase = '';
+  @Prop() createHref = '';
+  @Prop() trainingHrefBase = '';
 
   @Event({ eventName: 'training-clicked' }) trainingClicked: EventEmitter<string>;
   @Event({ eventName: 'training-create-clicked' }) trainingCreateClicked: EventEmitter<void>;
@@ -57,7 +59,7 @@ export class KcrpMededuTrainingList {
             <h2>MedEdu školenia</h2>
             <p>Katalóg interného vzdelávania nemocničného personálu</p>
           </div>
-          <md-filled-button onClick={() => this.trainingCreateClicked.emit()}>
+          <md-filled-button href={this.createHref || undefined} onClick={() => this.createTraining()}>
             <md-icon slot="icon">add</md-icon>
             Nové školenie
           </md-filled-button>
@@ -101,7 +103,7 @@ export class KcrpMededuTrainingList {
     const place = training.location || training.onlineLink || 'miesto bude doplnené';
 
     return (
-      <md-list-item onClick={() => this.trainingClicked.emit(training.id)}>
+      <md-list-item href={this.trainingHref(training.id) || undefined} onClick={() => this.openTraining(training.id)}>
         <md-icon slot="start">{training.onlineLink ? 'video_call' : 'school'}</md-icon>
         <div slot="headline">{training.title}</div>
         <div slot="supporting-text">
@@ -154,6 +156,26 @@ export class KcrpMededuTrainingList {
 
   private eventValue(event: InputEvent): string {
     return (event.target as HTMLInputElement).value;
+  }
+
+  private createTraining() {
+    if (!this.createHref) {
+      this.trainingCreateClicked.emit();
+    }
+  }
+
+  private openTraining(trainingId: string) {
+    if (!this.trainingHrefBase) {
+      this.trainingClicked.emit(trainingId);
+    }
+  }
+
+  private trainingHref(trainingId: string) {
+    if (!this.trainingHrefBase) {
+      return '';
+    }
+
+    return `${this.trainingHrefBase.replace(/\/$/, '')}/${encodeURIComponent(trainingId)}`;
   }
 }
 

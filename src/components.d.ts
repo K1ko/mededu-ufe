@@ -5,19 +5,76 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
+import { TrainingForm } from "./components/kcrp-mededu-training-editor/kcrp-mededu-training-editor";
+export { TrainingForm } from "./components/kcrp-mededu-training-editor/kcrp-mededu-training-editor";
 export namespace Components {
+    interface KcrpMededuTrainingEditor {
+        /**
+          * @default ''
+         */
+        "apiBase": string;
+        /**
+          * @default ''
+         */
+        "backHref": string;
+        /**
+          * @default '@new'
+         */
+        "trainingId": string;
+    }
     interface KcrpMededuTrainingList {
         /**
           * @default ''
          */
         "apiBase": string;
+        /**
+          * @default ''
+         */
+        "createHref": string;
+        /**
+          * @default ''
+         */
+        "trainingHrefBase": string;
     }
+    interface KcrpMededuTrainingsApp {
+        /**
+          * @default ''
+         */
+        "apiBase": string;
+        /**
+          * @default '/kcrp-mededu-trainings/'
+         */
+        "basePath": string;
+    }
+}
+export interface KcrpMededuTrainingEditorCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLKcrpMededuTrainingEditorElement;
 }
 export interface KcrpMededuTrainingListCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLKcrpMededuTrainingListElement;
 }
 declare global {
+    interface HTMLKcrpMededuTrainingEditorElementEventMap {
+        "training-saved": TrainingForm;
+        "training-cancelled": void;
+        "training-archived": string;
+    }
+    interface HTMLKcrpMededuTrainingEditorElement extends Components.KcrpMededuTrainingEditor, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLKcrpMededuTrainingEditorElementEventMap>(type: K, listener: (this: HTMLKcrpMededuTrainingEditorElement, ev: KcrpMededuTrainingEditorCustomEvent<HTMLKcrpMededuTrainingEditorElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLKcrpMededuTrainingEditorElementEventMap>(type: K, listener: (this: HTMLKcrpMededuTrainingEditorElement, ev: KcrpMededuTrainingEditorCustomEvent<HTMLKcrpMededuTrainingEditorElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLKcrpMededuTrainingEditorElement: {
+        prototype: HTMLKcrpMededuTrainingEditorElement;
+        new (): HTMLKcrpMededuTrainingEditorElement;
+    };
     interface HTMLKcrpMededuTrainingListElementEventMap {
         "training-clicked": string;
         "training-create-clicked": void;
@@ -36,33 +93,91 @@ declare global {
         prototype: HTMLKcrpMededuTrainingListElement;
         new (): HTMLKcrpMededuTrainingListElement;
     };
+    interface HTMLKcrpMededuTrainingsAppElement extends Components.KcrpMededuTrainingsApp, HTMLStencilElement {
+    }
+    var HTMLKcrpMededuTrainingsAppElement: {
+        prototype: HTMLKcrpMededuTrainingsAppElement;
+        new (): HTMLKcrpMededuTrainingsAppElement;
+    };
     interface HTMLElementTagNameMap {
+        "kcrp-mededu-training-editor": HTMLKcrpMededuTrainingEditorElement;
         "kcrp-mededu-training-list": HTMLKcrpMededuTrainingListElement;
+        "kcrp-mededu-trainings-app": HTMLKcrpMededuTrainingsAppElement;
     }
 }
 declare namespace LocalJSX {
+    interface KcrpMededuTrainingEditor {
+        /**
+          * @default ''
+         */
+        "apiBase"?: string;
+        /**
+          * @default ''
+         */
+        "backHref"?: string;
+        "onTraining-archived"?: (event: KcrpMededuTrainingEditorCustomEvent<string>) => void;
+        "onTraining-cancelled"?: (event: KcrpMededuTrainingEditorCustomEvent<void>) => void;
+        "onTraining-saved"?: (event: KcrpMededuTrainingEditorCustomEvent<TrainingForm>) => void;
+        /**
+          * @default '@new'
+         */
+        "trainingId"?: string;
+    }
     interface KcrpMededuTrainingList {
         /**
           * @default ''
          */
         "apiBase"?: string;
+        /**
+          * @default ''
+         */
+        "createHref"?: string;
         "onTraining-clicked"?: (event: KcrpMededuTrainingListCustomEvent<string>) => void;
         "onTraining-create-clicked"?: (event: KcrpMededuTrainingListCustomEvent<void>) => void;
+        /**
+          * @default ''
+         */
+        "trainingHrefBase"?: string;
+    }
+    interface KcrpMededuTrainingsApp {
+        /**
+          * @default ''
+         */
+        "apiBase"?: string;
+        /**
+          * @default '/kcrp-mededu-trainings/'
+         */
+        "basePath"?: string;
     }
 
+    interface KcrpMededuTrainingEditorAttributes {
+        "trainingId": string;
+        "apiBase": string;
+        "backHref": string;
+    }
     interface KcrpMededuTrainingListAttributes {
+        "apiBase": string;
+        "createHref": string;
+        "trainingHrefBase": string;
+    }
+    interface KcrpMededuTrainingsAppAttributes {
+        "basePath": string;
         "apiBase": string;
     }
 
     interface IntrinsicElements {
+        "kcrp-mededu-training-editor": Omit<KcrpMededuTrainingEditor, keyof KcrpMededuTrainingEditorAttributes> & { [K in keyof KcrpMededuTrainingEditor & keyof KcrpMededuTrainingEditorAttributes]?: KcrpMededuTrainingEditor[K] } & { [K in keyof KcrpMededuTrainingEditor & keyof KcrpMededuTrainingEditorAttributes as `attr:${K}`]?: KcrpMededuTrainingEditorAttributes[K] } & { [K in keyof KcrpMededuTrainingEditor & keyof KcrpMededuTrainingEditorAttributes as `prop:${K}`]?: KcrpMededuTrainingEditor[K] };
         "kcrp-mededu-training-list": Omit<KcrpMededuTrainingList, keyof KcrpMededuTrainingListAttributes> & { [K in keyof KcrpMededuTrainingList & keyof KcrpMededuTrainingListAttributes]?: KcrpMededuTrainingList[K] } & { [K in keyof KcrpMededuTrainingList & keyof KcrpMededuTrainingListAttributes as `attr:${K}`]?: KcrpMededuTrainingListAttributes[K] } & { [K in keyof KcrpMededuTrainingList & keyof KcrpMededuTrainingListAttributes as `prop:${K}`]?: KcrpMededuTrainingList[K] };
+        "kcrp-mededu-trainings-app": Omit<KcrpMededuTrainingsApp, keyof KcrpMededuTrainingsAppAttributes> & { [K in keyof KcrpMededuTrainingsApp & keyof KcrpMededuTrainingsAppAttributes]?: KcrpMededuTrainingsApp[K] } & { [K in keyof KcrpMededuTrainingsApp & keyof KcrpMededuTrainingsAppAttributes as `attr:${K}`]?: KcrpMededuTrainingsAppAttributes[K] } & { [K in keyof KcrpMededuTrainingsApp & keyof KcrpMededuTrainingsAppAttributes as `prop:${K}`]?: KcrpMededuTrainingsApp[K] };
     }
 }
 export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
+            "kcrp-mededu-training-editor": LocalJSX.IntrinsicElements["kcrp-mededu-training-editor"] & JSXBase.HTMLAttributes<HTMLKcrpMededuTrainingEditorElement>;
             "kcrp-mededu-training-list": LocalJSX.IntrinsicElements["kcrp-mededu-training-list"] & JSXBase.HTMLAttributes<HTMLKcrpMededuTrainingListElement>;
+            "kcrp-mededu-trainings-app": LocalJSX.IntrinsicElements["kcrp-mededu-trainings-app"] & JSXBase.HTMLAttributes<HTMLKcrpMededuTrainingsAppElement>;
         }
     }
 }
