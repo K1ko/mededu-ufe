@@ -42,6 +42,8 @@ export class KcrpMededuTrainingsApp {
   }
 
   render() {
+    console.debug('kcrp-mededu-trainings-app.render() - path: %s', this.relativePath);
+
     const route = this.relativePath.replace(/^\/+/, '');
     const editorMatch = route.match(/^training\/([^/]+)$/);
 
