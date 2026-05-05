@@ -13,6 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { Registration } from './Registration';
+import {
+    RegistrationFromJSON,
+    RegistrationFromJSONTyped,
+    RegistrationToJSON,
+} from './Registration';
 import type { TrainingStatus } from './TrainingStatus';
 import {
     TrainingStatusFromJSON,
@@ -27,55 +33,55 @@ import {
 } from './TrainingType';
 
 /**
- * 
+ *
  * @export
  * @interface Training
  */
 export interface Training {
     /**
-     * 
+     *
      * @type {string}
      * @memberof Training
      */
     id: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof Training
      */
     title: string;
     /**
-     * 
+     *
      * @type {TrainingType}
      * @memberof Training
      */
     type: TrainingType;
     /**
-     * 
+     *
      * @type {string}
      * @memberof Training
      */
     department: string;
     /**
-     * 
+     *
      * @type {Date}
      * @memberof Training
      */
     startAt: Date;
     /**
-     * 
+     *
      * @type {number}
      * @memberof Training
      */
     capacity: number;
     /**
-     * 
+     *
      * @type {string}
      * @memberof Training
      */
     lecturer: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof Training
      */
@@ -87,35 +93,41 @@ export interface Training {
      */
     onlineLink?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof Training
      */
     description?: string;
     /**
-     * 
+     *
      * @type {string}
      * @memberof Training
      */
     requirements?: string;
     /**
-     * 
+     *
      * @type {TrainingStatus}
      * @memberof Training
      */
     status: TrainingStatus;
     /**
-     * 
+     *
      * @type {number}
      * @memberof Training
      */
     occupied: number;
     /**
-     * 
+     *
      * @type {number}
      * @memberof Training
      */
     waitlisted: number;
+    /**
+     *
+     * @type {Array<Registration>}
+     * @memberof Training
+     */
+    registrations?: Array<Registration>;
 }
 
 /**
@@ -146,7 +158,7 @@ export function TrainingFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         return json;
     }
     return {
-        
+
         'id': json['id'],
         'title': json['title'],
         'type': TrainingTypeFromJSON(json['type']),
@@ -161,6 +173,7 @@ export function TrainingFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'status': TrainingStatusFromJSON(json['status']),
         'occupied': json['occupied'],
         'waitlisted': json['waitlisted'],
+        'registrations': !exists(json, 'registrations') ? undefined : ((json['registrations'] as Array<any>).map(RegistrationFromJSON)),
     };
 }
 
@@ -172,7 +185,7 @@ export function TrainingToJSON(value?: Training | null): any {
         return null;
     }
     return {
-        
+
         'id': value.id,
         'title': value.title,
         'type': TrainingTypeToJSON(value.type),
@@ -187,6 +200,7 @@ export function TrainingToJSON(value?: Training | null): any {
         'status': TrainingStatusToJSON(value.status),
         'occupied': value.occupied,
         'waitlisted': value.waitlisted,
+        'registrations': value.registrations === undefined ? undefined : ((value.registrations as Array<any>).map(RegistrationToJSON)),
     };
 }
 

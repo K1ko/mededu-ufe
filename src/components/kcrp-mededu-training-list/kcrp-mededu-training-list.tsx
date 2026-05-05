@@ -1,6 +1,6 @@
 import { Component, Event, EventEmitter, Host, Prop, State, h } from '@stencil/core';
 
-import { Configuration, ResponseError, Training as ApiTraining, TrainingsApi } from '../../api/mededu';
+import { Configuration, DepartmentsApi, ResponseError, Training as ApiTraining, TrainingsApi } from '../../api/mededu';
 
 import '@material/web/button/filled-button';
 import '@material/web/button/filled-tonal-button';
@@ -9,7 +9,8 @@ import '@material/web/icon/icon';
 import '@material/web/list/list';
 import '@material/web/list/list-item';
 import '@material/web/progress/linear-progress';
-import '@material/web/textfield/filled-text-field';
+import '@material/web/select/filled-select';
+import '@material/web/select/select-option';
 
 type TrainingStatus = 'planned' | 'cancelled' | 'archived';
 
@@ -23,6 +24,7 @@ interface Training {
   lecturer: string;
   location?: string;
   onlineLink?: string;
+  description?: string;
   requirements?: string;
   status: TrainingStatus;
   occupied: number;
@@ -44,11 +46,15 @@ export class KcrpMededuTrainingList {
 
   @State() private trainings: Training[] = [];
   @State() private departmentFilter = '';
+  @State() private departments: string[] = sampleDepartments;
   @State() private loading = false;
   @State() private errorMessage = '';
 
   async componentWillLoad() {
-    await this.loadTrainings();
+    await Promise.all([
+      this.loadTrainings(),
+      this.loadDepartments(),
+    ]);
   }
 
   render() {
@@ -56,6 +62,7 @@ export class KcrpMededuTrainingList {
     const plannedTrainings = this.trainings.filter(training => training.status === 'planned').length;
     const freeSeats = this.trainings.reduce((sum, training) => sum + Math.max(training.capacity - training.occupied, 0), 0);
     const waitlisted = this.trainings.reduce((sum, training) => sum + training.waitlisted, 0);
+    const registered = this.trainings.reduce((sum, training) => sum + training.occupied + training.waitlisted, 0);
 
     return (
       <Host>
@@ -67,6 +74,7 @@ export class KcrpMededuTrainingList {
           <div class="summary" aria-label="Prehľad katalógu">
             <span><strong>{plannedTrainings}</strong> plánované</span>
             <span><strong>{freeSeats}</strong> voľné miesta</span>
+            <span><strong>{registered}</strong> registrácie</span>
             <span><strong>{waitlisted}</strong> náhradníci</span>
           </div>
           <md-filled-button href={this.createHref || undefined} onClick={() => this.createTraining()}>
@@ -76,12 +84,20 @@ export class KcrpMededuTrainingList {
         </header>
 
         <div class="toolbar">
-          <md-filled-text-field
-            label="Filtrovať podľa oddelenia"
+          <md-filled-select
+            label="Oddelenie"
             value={this.departmentFilter}
             onInput={(event: InputEvent) => this.departmentFilter = this.eventValue(event)}>
             <md-icon slot="leading-icon">filter_alt</md-icon>
-          </md-filled-text-field>
+            <md-select-option value="">
+              <div slot="headline">Všetky oddelenia</div>
+            </md-select-option>
+            {this.departments.map(department => (
+              <md-select-option value={department} selected={department === this.departmentFilter}>
+                <div slot="headline">{department}</div>
+              </md-select-option>
+            ))}
+          </md-filled-select>
 
           <md-filled-tonal-button onClick={() => this.loadTrainings()}>
             <md-icon slot="icon">refresh</md-icon>
@@ -120,6 +136,7 @@ export class KcrpMededuTrainingList {
         <div slot="headline">{training.title}</div>
         <div slot="supporting-text">
           <span class="department">{training.department}</span>
+          <span>{this.trainingTypeLabel(training.type)}</span>
           <span>{startsAt.toLocaleString()}</span>
           <span>{place}</span>
           <span>lektor: {training.lecturer}</span>
@@ -133,6 +150,9 @@ export class KcrpMededuTrainingList {
           </div>
           <md-assist-chip label={isFull ? 'plné' : `${training.capacity - training.occupied} voľné`}>
             <md-icon slot="icon">groups</md-icon>
+          </md-assist-chip>
+          <md-assist-chip label={this.statusLabel(training.status)}>
+            <md-icon slot="icon">{training.status === 'planned' ? 'event_available' : 'event_busy'}</md-icon>
           </md-assist-chip>
           {training.waitlisted > 0 ? (
             <md-assist-chip label={`${training.waitlisted} náhrad.`}>
@@ -161,6 +181,20 @@ export class KcrpMededuTrainingList {
       this.errorMessage = `Nepodarilo sa načítať školenia z API: ${this.apiErrorMessage(error)}`;
     } finally {
       this.loading = false;
+    }
+  }
+
+  private async loadDepartments() {
+    try {
+      if (!this.apiBase) {
+        this.departments = sampleDepartments;
+        return;
+      }
+
+      const departments = await this.departmentsApi().listDepartments();
+      this.departments = departments.length > 0 ? departments : sampleDepartments;
+    } catch {
+      this.departments = sampleDepartments;
     }
   }
 
@@ -200,6 +234,10 @@ export class KcrpMededuTrainingList {
     return new TrainingsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
   }
 
+  private departmentsApi() {
+    return new DepartmentsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
+  }
+
   private fromApiTraining(training: ApiTraining): Training {
     return {
       id: training.id,
@@ -211,11 +249,38 @@ export class KcrpMededuTrainingList {
       lecturer: training.lecturer,
       location: training.location || '',
       onlineLink: training.onlineLink || '',
+      description: training.description || '',
       requirements: training.requirements || '',
       status: (training.status || 'planned') as TrainingStatus,
       occupied: Number(training.occupied || 0),
       waitlisted: Number(training.waitlisted || 0),
     };
+  }
+
+  private trainingTypeLabel(type: string) {
+    switch (type) {
+      case 'mandatory':
+        return 'Povinné';
+      case 'department':
+        return 'Oddelenie';
+      case 'specialization':
+        return 'Odbornosť';
+      case 'online':
+        return 'Online';
+      default:
+        return type;
+    }
+  }
+
+  private statusLabel(status: TrainingStatus) {
+    switch (status) {
+      case 'cancelled':
+        return 'zrušené';
+      case 'archived':
+        return 'archív';
+      default:
+        return 'plánované';
+    }
   }
 
   private toIsoDate(value: Date | string | undefined): string {
@@ -248,7 +313,7 @@ const sampleTrainings: Training[] = [
     department: 'Urgent',
     startAt: '2026-05-20T08:00:00Z',
     capacity: 20,
-    occupied: 16,
+    occupied: 2,
     waitlisted: 0,
     lecturer: 'Mgr. Jana Nováková',
     location: 'Školiaca miestnosť A',
@@ -261,12 +326,22 @@ const sampleTrainings: Training[] = [
     type: 'department',
     department: 'JIS',
     startAt: '2026-06-02T12:30:00Z',
-    capacity: 12,
-    occupied: 12,
-    waitlisted: 3,
+    capacity: 1,
+    occupied: 1,
+    waitlisted: 1,
     lecturer: 'MUDr. Eva Hrubá',
     onlineLink: 'https://teams.example/mededu/icu-infection',
     requirements: 'Notebook alebo tablet',
     status: 'planned',
   },
+];
+
+const sampleDepartments = [
+  'Urgent',
+  'JIS',
+  'Chirurgia',
+  'Interné',
+  'Pediatria',
+  'Radiológia',
+  'Anestéziológia',
 ];

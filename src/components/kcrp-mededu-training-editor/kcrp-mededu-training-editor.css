@@ -61,6 +61,13 @@ form {
   padding: 18px;
 }
 
+form.registration-form {
+  border: 0;
+  box-shadow: none;
+  margin-top: 14px;
+  padding: 0;
+}
+
 .form-section {
   border-top: 1px solid #e7edf3;
   display: grid;
@@ -75,6 +82,130 @@ form {
 
 .form-section + .form-section {
   margin-top: 18px;
+}
+
+.registration-panel {
+  background: var(--mededu-panel);
+  border: 1px solid var(--mededu-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  margin-top: 14px;
+  padding: 18px;
+}
+
+.registration-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.capacity-summary {
+  border: 1px solid #dbe5ee;
+  border-radius: 8px;
+  color: #475569;
+  display: grid;
+  gap: 5px;
+  min-width: 170px;
+  padding: 10px 12px;
+}
+
+.capacity-summary strong {
+  color: var(--mededu-accent-strong);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.capacity-summary span {
+  font-size: 0.78rem;
+}
+
+.capacity-meter {
+  background: #e2e8f0;
+  border-radius: 999px;
+  height: 7px;
+  overflow: hidden;
+}
+
+.capacity-meter span {
+  background: var(--mededu-accent);
+  display: block;
+  height: 100%;
+}
+
+.move-field {
+  margin-top: 14px;
+}
+
+.registration-actions,
+.participant-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.registration-actions {
+  margin-top: 14px;
+}
+
+.participants {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.participant {
+  align-items: center;
+  border: 1px solid #e7edf3;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: 12px;
+}
+
+.participant.waitlisted {
+  background: #fff8eb;
+  border-color: #fed7aa;
+}
+
+.participant div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.participant strong,
+.participant span,
+.participant small {
+  overflow-wrap: anywhere;
+}
+
+.participant span,
+.participant small {
+  color: var(--mededu-muted);
+}
+
+.status-chip {
+  background: #e8f4f2;
+  border-radius: 999px;
+  color: var(--mededu-accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.waitlisted .status-chip {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.empty {
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: var(--mededu-muted);
+  padding: 14px;
 }
 
 h3 {
@@ -165,6 +296,21 @@ md-filled-button {
   .actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .registration-header,
+  .registration-actions,
+  .participant-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .capacity-summary {
+    min-width: 0;
+  }
+
+  .participant {
+    grid-template-columns: 1fr;
   }
 
   .stretch-fill {

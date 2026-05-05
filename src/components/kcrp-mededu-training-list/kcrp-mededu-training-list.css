@@ -43,9 +43,9 @@ p,
 .summary {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(3, minmax(92px, 1fr));
+  grid-template-columns: repeat(4, minmax(92px, 1fr));
   margin-left: auto;
-  min-width: 330px;
+  min-width: 440px;
 }
 
 .summary span {
@@ -78,7 +78,7 @@ p,
   padding: 12px;
 }
 
-md-filled-text-field {
+md-filled-select {
   max-width: 430px;
   width: 100%;
 }

@@ -3,6 +3,9 @@ import { Component, Event as StencilEvent, EventEmitter, Host, Prop, State, h } 
 import {
   Configuration,
   DepartmentsApi,
+  Registration as ApiRegistration,
+  RegistrationInput,
+  RegistrationsApi,
   ResponseError,
   Training as ApiTraining,
   TrainingInput,
@@ -21,6 +24,7 @@ import '@material/web/select/select-option';
 import '@material/web/textfield/outlined-text-field';
 
 export type TrainingStatus = 'planned' | 'cancelled' | 'archived';
+export type RegistrationStatus = 'registered' | 'waitlisted';
 
 export interface TrainingForm {
   id?: string;
@@ -34,6 +38,37 @@ export interface TrainingForm {
   onlineLink: string;
   description: string;
   requirements: string;
+  status: TrainingStatus;
+  occupied: number;
+  waitlisted: number;
+}
+
+interface Registration {
+  id: string;
+  trainingId: string;
+  employeeId: string;
+  employeeName: string;
+  employeeEmail: string;
+  department: string;
+  note: string;
+  status: RegistrationStatus;
+  registeredAt: string;
+}
+
+interface RegistrationForm {
+  employeeId: string;
+  employeeName: string;
+  employeeEmail: string;
+  department: string;
+  note: string;
+  targetTrainingId: string;
+}
+
+interface TrainingOption {
+  id: string;
+  title: string;
+  startAt: string;
+  department: string;
   status: TrainingStatus;
 }
 
@@ -57,11 +92,18 @@ export class KcrpMededuTrainingEditor {
   @State() private errorMessage = '';
   @State() private savedMessage = '';
   @State() private departments: string[] = sampleDepartments;
+  @State() private registrations: Registration[] = [];
+  @State() private registrationForm: RegistrationForm = this.emptyRegistration();
+  @State() private registrationMessage = '';
+  @State() private editingRegistrationId = '';
+  @State() private trainingOptions: TrainingOption[] = [];
 
   async componentWillLoad() {
     await Promise.all([
       this.loadTraining(),
       this.loadDepartments(),
+      this.loadRegistrations(),
+      this.loadTrainingOptions(),
     ]);
   }
 
@@ -236,7 +278,168 @@ export class KcrpMededuTrainingEditor {
             </md-filled-button>
           </div>
         </form>
+
+        {!isNew ? this.renderRegistrationsSection() : undefined}
       </Host>
+    );
+  }
+
+  private renderRegistrationsSection() {
+    const occupancy = Math.min(Math.round((this.form.occupied / Math.max(this.form.capacity, 1)) * 100), 100);
+    const availableSeats = Math.max(this.form.capacity - this.form.occupied, 0);
+
+    return (
+      <section class="registration-panel">
+        <div class="registration-header">
+          <div>
+            <h3>Registrácie</h3>
+            <p>Prihlasovanie zamestnancov, náhradníci a presun na iný termín</p>
+          </div>
+          <div class="capacity-summary" aria-label="Obsadenosť školenia">
+            <strong>{this.form.occupied}/{this.form.capacity}</strong>
+            <span>{availableSeats > 0 ? `${availableSeats} voľné miesta` : 'kapacita naplnená'}</span>
+            <div class="capacity-meter">
+              <span style={{ width: `${occupancy}%` }}></span>
+            </div>
+          </div>
+        </div>
+
+        {this.registrationMessage ? (
+          <div class="message success">
+            <md-icon>check_circle</md-icon>
+            <span>{this.registrationMessage}</span>
+          </div>
+        ) : undefined}
+
+        <form class="registration-form" onSubmit={(event) => this.saveRegistration(event)}>
+          <div class="grid">
+            <md-outlined-text-field
+              required
+              label="ID zamestnanca"
+              value={this.registrationForm.employeeId}
+              onInput={(event: InputEvent) => this.updateRegistrationField('employeeId', this.eventValue(event))}>
+              <md-icon slot="leading-icon">badge</md-icon>
+            </md-outlined-text-field>
+
+            <md-outlined-text-field
+              required
+              label="Meno zamestnanca"
+              value={this.registrationForm.employeeName}
+              onInput={(event: InputEvent) => this.updateRegistrationField('employeeName', this.eventValue(event))}>
+              <md-icon slot="leading-icon">person</md-icon>
+            </md-outlined-text-field>
+
+            <md-outlined-text-field
+              label="E-mail"
+              value={this.registrationForm.employeeEmail}
+              onInput={(event: InputEvent) => this.updateRegistrationField('employeeEmail', this.eventValue(event))}>
+              <md-icon slot="leading-icon">mail</md-icon>
+            </md-outlined-text-field>
+
+            {this.renderRegistrationDepartmentField()}
+          </div>
+
+          {this.editingRegistrationId ? this.renderRegistrationMoveField() : undefined}
+
+          <md-outlined-text-field
+            class="wide"
+            type="textarea"
+            rows="2"
+            label="Poznámka"
+            value={this.registrationForm.note}
+            onInput={(event: InputEvent) => this.updateRegistrationField('note', this.eventValue(event))}>
+          </md-outlined-text-field>
+
+          <div class="registration-actions">
+            {this.editingRegistrationId ? (
+              <md-outlined-button type="button" onClick={() => this.cancelRegistrationEdit()}>
+                Zrušiť úpravu
+              </md-outlined-button>
+            ) : undefined}
+            <span class="stretch-fill"></span>
+            <md-filled-button type="submit">
+              <md-icon slot="icon">{this.editingRegistrationId ? 'save' : 'how_to_reg'}</md-icon>
+              {this.editingRegistrationId ? 'Uložiť registráciu' : 'Prihlásiť'}
+            </md-filled-button>
+          </div>
+        </form>
+
+        <div class="participants" aria-label="Zoznam účastníkov školenia">
+          {this.registrations.length === 0 ? (
+            <div class="empty">Zatiaľ nie je prihlásený žiadny účastník.</div>
+          ) : this.registrations.map(registration => this.renderRegistration(registration))}
+        </div>
+      </section>
+    );
+  }
+
+  private renderRegistrationDepartmentField() {
+    return (
+      <md-outlined-select
+        label="Oddelenie"
+        value={this.registrationForm.department}
+        onInput={(event: InputEvent) => this.updateRegistrationField('department', this.eventValue(event))}>
+        <md-icon slot="leading-icon">local_hospital</md-icon>
+        <md-select-option value="">
+          <div slot="headline">Bez oddelenia</div>
+        </md-select-option>
+        {this.departmentOptions().map(department => (
+          <md-select-option value={department} selected={department === this.registrationForm.department}>
+            <div slot="headline">{department}</div>
+          </md-select-option>
+        ))}
+      </md-outlined-select>
+    );
+  }
+
+  private renderRegistrationMoveField() {
+    const options = this.trainingOptions
+      .filter(training => training.id !== this.trainingId && training.status === 'planned');
+
+    if (options.length === 0) {
+      return undefined;
+    }
+
+    return (
+      <div class="grid single move-field">
+        <md-outlined-select
+          label="Presunúť na iný termín"
+          value={this.registrationForm.targetTrainingId}
+          onInput={(event: InputEvent) => this.updateRegistrationField('targetTrainingId', this.eventValue(event))}>
+          <md-select-option value="">
+            <div slot="headline">Ponechať na tomto školení</div>
+          </md-select-option>
+          {options.map(training => (
+            <md-select-option value={training.id} selected={training.id === this.registrationForm.targetTrainingId}>
+              <div slot="headline">{training.title}</div>
+              <div slot="supporting-text">{this.formatDateTime(training.startAt)} / {training.department}</div>
+            </md-select-option>
+          ))}
+        </md-outlined-select>
+      </div>
+    );
+  }
+
+  private renderRegistration(registration: Registration) {
+    return (
+      <article class={{ participant: true, waitlisted: registration.status === 'waitlisted' }}>
+        <div>
+          <strong>{registration.employeeName}</strong>
+          <span>{registration.employeeId}{registration.department ? ` / ${registration.department}` : ''}</span>
+          {registration.note ? <small>{registration.note}</small> : undefined}
+        </div>
+        <span class="status-chip">{this.registrationStatusLabel(registration.status)}</span>
+        <div class="participant-actions">
+          <md-outlined-button type="button" onClick={() => this.editRegistration(registration)}>
+            <md-icon slot="icon">edit</md-icon>
+            Upraviť
+          </md-outlined-button>
+          <md-filled-tonal-button type="button" onClick={() => this.deleteRegistration(registration)}>
+            <md-icon slot="icon">person_remove</md-icon>
+            Odhlásiť
+          </md-filled-tonal-button>
+        </div>
+      </article>
     );
   }
 
@@ -276,6 +479,46 @@ export class KcrpMededuTrainingEditor {
       this.departments = departments.length > 0 ? departments : sampleDepartments;
     } catch {
       this.departments = sampleDepartments;
+    }
+  }
+
+  private async loadRegistrations() {
+    if (this.trainingId === '@new') {
+      this.registrations = [];
+      return;
+    }
+
+    try {
+      if (!this.apiBase) {
+        this.registrations = sampleRegistrations(this.trainingId);
+        return;
+      }
+
+      const registrations = await this.registrationsApi().listRegistrations({ trainingId: this.trainingId });
+      this.registrations = registrations.map(registration => this.fromApiRegistration(registration));
+    } catch (error: any) {
+      this.registrations = sampleRegistrations(this.trainingId);
+      this.errorMessage = `Nepodarilo sa načítať registrácie z API: ${this.apiErrorMessage(error)}`;
+    }
+  }
+
+  private async loadTrainingOptions() {
+    try {
+      if (!this.apiBase) {
+        this.trainingOptions = sampleTrainingOptions;
+        return;
+      }
+
+      const trainings = await this.trainingsApi().listTrainings({});
+      this.trainingOptions = trainings.map(training => ({
+        id: training.id,
+        title: training.title,
+        startAt: this.toIsoDate(training.startAt),
+        department: training.department,
+        status: (training.status || 'planned') as TrainingStatus,
+      }));
+    } catch {
+      this.trainingOptions = sampleTrainingOptions;
     }
   }
 
@@ -368,9 +611,124 @@ export class KcrpMededuTrainingEditor {
     }
   }
 
+  private async saveRegistration(event: Event) {
+    event.preventDefault();
+    this.errorMessage = '';
+    this.registrationMessage = '';
+
+    if (!this.registrationForm.employeeId.trim() || !this.registrationForm.employeeName.trim()) {
+      this.errorMessage = 'Vyplňte ID a meno zamestnanca.';
+      return;
+    }
+
+    this.loading = true;
+    try {
+      let savedRegistration: Registration | undefined;
+      const payload = this.toApiRegistrationInput();
+
+      if (this.apiBase) {
+        const apiRegistration = this.editingRegistrationId
+          ? await this.registrationsApi().updateRegistration({
+            trainingId: this.trainingId,
+            registrationId: this.editingRegistrationId,
+            registrationInput: payload,
+          })
+          : await this.registrationsApi().createRegistration({
+            trainingId: this.trainingId,
+            registrationInput: payload,
+          });
+        savedRegistration = this.fromApiRegistration(apiRegistration);
+      } else {
+        savedRegistration = this.saveSampleRegistration();
+      }
+
+      if (this.apiBase) {
+        await Promise.all([
+          this.loadTraining(),
+          this.loadRegistrations(),
+          this.loadTrainingOptions(),
+        ]);
+      }
+      this.registrationForm = this.emptyRegistration();
+      this.editingRegistrationId = '';
+      this.registrationMessage = savedRegistration?.status === 'waitlisted'
+        ? 'Registrácia bola uložená ako náhradník.'
+        : 'Registrácia bola uložená.';
+    } catch (error: any) {
+      this.errorMessage = `Nepodarilo sa uložiť registráciu: ${this.apiErrorMessage(error)}`;
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  private editRegistration(registration: Registration) {
+    this.editingRegistrationId = registration.id;
+    this.registrationForm = {
+      employeeId: registration.employeeId,
+      employeeName: registration.employeeName,
+      employeeEmail: registration.employeeEmail,
+      department: registration.department,
+      note: registration.note,
+      targetTrainingId: '',
+    };
+    this.registrationMessage = '';
+  }
+
+  private cancelRegistrationEdit() {
+    this.editingRegistrationId = '';
+    this.registrationForm = this.emptyRegistration();
+    this.registrationMessage = '';
+  }
+
+  private async deleteRegistration(registration: Registration) {
+    this.errorMessage = '';
+    this.registrationMessage = '';
+
+    if (!window.confirm(`Odhlásiť účastníka ${registration.employeeName}?`)) {
+      return;
+    }
+
+    this.loading = true;
+    try {
+      if (this.apiBase) {
+        await this.registrationsApi().deleteRegistration({
+          trainingId: this.trainingId,
+          registrationId: registration.id,
+        });
+      } else {
+        this.registrations = this.recalculateRegistrationStatuses(
+          this.registrations.filter(item => item.id !== registration.id),
+        );
+        this.form = {
+          ...this.form,
+          occupied: this.registrations.filter(item => item.status === 'registered').length,
+          waitlisted: this.registrations.filter(item => item.status === 'waitlisted').length,
+        };
+      }
+
+      if (this.apiBase) {
+        await Promise.all([
+          this.loadTraining(),
+          this.loadRegistrations(),
+        ]);
+      }
+      this.cancelRegistrationEdit();
+      this.registrationMessage = 'Registrácia bola odstránená.';
+    } catch (error: any) {
+      this.errorMessage = `Nepodarilo sa odstrániť registráciu: ${this.apiErrorMessage(error)}`;
+    } finally {
+      this.loading = false;
+    }
+  }
+
   private updateField<Field extends keyof TrainingForm>(field: Field, value: TrainingForm[Field]) {
     this.form = { ...this.form, [field]: value };
     this.savedMessage = '';
+  }
+
+  private updateRegistrationField<Field extends keyof RegistrationForm>(field: Field, value: RegistrationForm[Field]) {
+    this.registrationForm = { ...this.registrationForm, [field]: value };
+    this.registrationMessage = '';
   }
 
   private eventValue(event: InputEvent): string {
@@ -396,11 +754,28 @@ export class KcrpMededuTrainingEditor {
       description: '',
       requirements: '',
       status: 'planned',
+      occupied: 0,
+      waitlisted: 0,
+    };
+  }
+
+  private emptyRegistration(): RegistrationForm {
+    return {
+      employeeId: '',
+      employeeName: '',
+      employeeEmail: '',
+      department: '',
+      note: '',
+      targetTrainingId: '',
     };
   }
 
   private trainingsApi() {
     return new TrainingsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
+  }
+
+  private registrationsApi() {
+    return new RegistrationsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
   }
 
   private departmentsApi() {
@@ -431,6 +806,22 @@ export class KcrpMededuTrainingEditor {
       description: training.description || '',
       requirements: training.requirements || '',
       status: (training.status || 'planned') as TrainingStatus,
+      occupied: Number(training.occupied || 0),
+      waitlisted: Number(training.waitlisted || 0),
+    };
+  }
+
+  private fromApiRegistration(registration: ApiRegistration): Registration {
+    return {
+      id: registration.id,
+      trainingId: registration.trainingId,
+      employeeId: registration.employeeId,
+      employeeName: registration.employeeName,
+      employeeEmail: registration.employeeEmail || '',
+      department: registration.department || '',
+      note: registration.note || '',
+      status: (registration.status || 'registered') as RegistrationStatus,
+      registeredAt: this.toIsoDate(registration.registeredAt),
     };
   }
 
@@ -450,6 +841,56 @@ export class KcrpMededuTrainingEditor {
     };
   }
 
+  private toApiRegistrationInput(): RegistrationInput {
+    return {
+      employeeId: this.registrationForm.employeeId,
+      employeeName: this.registrationForm.employeeName,
+      employeeEmail: this.registrationForm.employeeEmail || undefined,
+      department: this.registrationForm.department || undefined,
+      note: this.registrationForm.note || undefined,
+      targetTrainingId: this.registrationForm.targetTrainingId || undefined,
+    };
+  }
+
+  private saveSampleRegistration(): Registration {
+    const existing = this.editingRegistrationId
+      ? this.registrations.find(registration => registration.id === this.editingRegistrationId)
+      : undefined;
+    const registration: Registration = {
+      id: existing?.id || `local-${Date.now()}`,
+      trainingId: this.registrationForm.targetTrainingId || this.trainingId,
+      employeeId: this.registrationForm.employeeId,
+      employeeName: this.registrationForm.employeeName,
+      employeeEmail: this.registrationForm.employeeEmail,
+      department: this.registrationForm.department,
+      note: this.registrationForm.note,
+      status: 'registered',
+      registeredAt: existing?.registeredAt || new Date().toISOString(),
+    };
+
+    const nextRegistrations = existing
+      ? this.registrations.map(item => item.id === existing.id ? registration : item)
+      : [...this.registrations, registration];
+
+    this.registrations = this.recalculateRegistrationStatuses(nextRegistrations);
+    this.form = {
+      ...this.form,
+      occupied: this.registrations.filter(item => item.status === 'registered').length,
+      waitlisted: this.registrations.filter(item => item.status === 'waitlisted').length,
+    };
+    return this.registrations.find(item => item.id === registration.id) || registration;
+  }
+
+  private recalculateRegistrationStatuses(registrations: Registration[]) {
+    return [...registrations]
+      .sort((left, right) => new Date(left.registeredAt).getTime() - new Date(right.registeredAt).getTime())
+      .map((registration, index) => ({
+        ...registration,
+        trainingId: this.trainingId,
+        status: index < this.form.capacity ? 'registered' as RegistrationStatus : 'waitlisted' as RegistrationStatus,
+      }));
+  }
+
   private toDatetimeLocal(value: Date | string): string {
     if (!value) {
       return '';
@@ -461,6 +902,28 @@ export class KcrpMededuTrainingEditor {
     }
 
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+
+  private toIsoDate(value: Date | string | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toISOString();
+  }
+
+  private formatDateTime(value: Date | string | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+  }
+
+  private registrationStatusLabel(status: RegistrationStatus) {
+    return status === 'waitlisted' ? 'Náhradník' : 'Prihlásený';
   }
 
   private apiErrorMessage(error: unknown): string {
@@ -490,8 +953,54 @@ function sampleTraining(id: string): TrainingForm {
     description: 'Interné školenie pre personál urgentného príjmu.',
     requirements: 'Zamestnanecký preukaz',
     status: 'planned',
+    occupied: 2,
+    waitlisted: 0,
   };
 }
+
+function sampleRegistrations(trainingId: string): Registration[] {
+  return [
+    {
+      id: 'reg-urgent-001',
+      trainingId,
+      employeeId: 'EMP-1042',
+      employeeName: 'Bc. Peter Malina',
+      employeeEmail: 'peter.malina@hospital.example',
+      department: 'Urgent',
+      note: 'Uprednostňuje ranný termín.',
+      status: 'registered',
+      registeredAt: '2026-05-01T09:15:00Z',
+    },
+    {
+      id: 'reg-urgent-002',
+      trainingId,
+      employeeId: 'EMP-1077',
+      employeeName: 'Mgr. Lucia Križová',
+      employeeEmail: 'lucia.krizova@hospital.example',
+      department: 'Chirurgia',
+      note: '',
+      status: 'registered',
+      registeredAt: '2026-05-03T13:40:00Z',
+    },
+  ];
+}
+
+const sampleTrainingOptions: TrainingOption[] = [
+  {
+    id: 'urgent-safety-2026-05',
+    title: 'BOZP pre urgentný príjem',
+    startAt: '2026-05-20T08:00:00Z',
+    department: 'Urgent',
+    status: 'planned',
+  },
+  {
+    id: 'icu-infection-2026-06',
+    title: 'Prevencia infekcií na JIS',
+    startAt: '2026-06-02T12:30:00Z',
+    department: 'JIS',
+    status: 'planned',
+  },
+];
 
 const sampleDepartments = [
   'Urgent',
