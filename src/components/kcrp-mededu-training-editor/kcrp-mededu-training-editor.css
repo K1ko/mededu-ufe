@@ -300,13 +300,49 @@ h3 {
 md-outlined-text-field,
 md-outlined-select {
   --md-outlined-field-container-color: #ffffff;
-  --md-outlined-field-input-text-color: var(--mededu-ink);
-  --md-outlined-field-label-text-color: #64748b;
-  --md-outlined-field-leading-icon-color: #64748b;
-  --md-outlined-field-outline-color: #cbd5e1;
-  --md-outlined-field-focus-outline-color: var(--mededu-accent);
-  --md-outlined-field-focus-label-text-color: var(--mededu-accent);
   --md-outlined-field-container-shape: 10px;
+  --md-outlined-field-content-color: var(--mededu-ink);
+  --md-outlined-field-disabled-content-color: var(--mededu-ink);
+  --md-outlined-field-disabled-content-opacity: 1;
+  --md-outlined-field-disabled-label-text-color: #475569;
+  --md-outlined-field-disabled-label-text-opacity: 1;
+  --md-outlined-field-disabled-leading-content-color: #64748b;
+  --md-outlined-field-disabled-leading-content-opacity: 1;
+  --md-outlined-field-disabled-outline-color: #cbd5e1;
+  --md-outlined-field-disabled-outline-opacity: 1;
+  --md-outlined-field-disabled-trailing-content-color: #64748b;
+  --md-outlined-field-disabled-trailing-content-opacity: 1;
+  --md-outlined-field-focus-label-text-color: var(--mededu-accent);
+  --md-outlined-field-focus-outline-color: var(--mededu-accent);
+  --md-outlined-field-label-text-color: #64748b;
+  --md-outlined-field-leading-content-color: #64748b;
+  --md-outlined-field-outline-color: #cbd5e1;
+  --md-outlined-select-text-field-disabled-input-text-color: var(--mededu-ink);
+  --md-outlined-select-text-field-disabled-input-text-opacity: 1;
+  --md-outlined-select-text-field-disabled-label-text-color: #475569;
+  --md-outlined-select-text-field-disabled-label-text-opacity: 1;
+  --md-outlined-select-text-field-disabled-leading-icon-color: #64748b;
+  --md-outlined-select-text-field-disabled-leading-icon-opacity: 1;
+  --md-outlined-select-text-field-disabled-outline-color: #cbd5e1;
+  --md-outlined-select-text-field-disabled-outline-opacity: 1;
+  --md-outlined-select-text-field-disabled-trailing-icon-color: #64748b;
+  --md-outlined-select-text-field-disabled-trailing-icon-opacity: 1;
+  --md-outlined-select-text-field-input-text-color: var(--mededu-ink);
+  --md-outlined-select-text-field-label-text-color: #64748b;
+  --md-outlined-select-text-field-leading-icon-color: #64748b;
+  --md-outlined-select-text-field-outline-color: #cbd5e1;
+  --md-outlined-text-field-disabled-input-text-color: var(--mededu-ink);
+  --md-outlined-text-field-disabled-input-text-opacity: 1;
+  --md-outlined-text-field-disabled-label-text-color: #475569;
+  --md-outlined-text-field-disabled-label-text-opacity: 1;
+  --md-outlined-text-field-disabled-leading-icon-color: #64748b;
+  --md-outlined-text-field-disabled-leading-icon-opacity: 1;
+  --md-outlined-text-field-disabled-outline-color: #cbd5e1;
+  --md-outlined-text-field-disabled-outline-opacity: 1;
+  --md-outlined-text-field-input-text-color: var(--mededu-ink);
+  --md-outlined-text-field-label-text-color: #64748b;
+  --md-outlined-text-field-leading-icon-color: #64748b;
+  --md-outlined-text-field-outline-color: #cbd5e1;
   width: 100%;
 }
 
