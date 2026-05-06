@@ -25,6 +25,7 @@ import '@material/web/textfield/outlined-text-field';
 
 export type TrainingStatus = 'planned' | 'cancelled' | 'archived';
 export type RegistrationStatus = 'registered' | 'waitlisted';
+type UserRole = 'employee' | 'hr';
 
 export interface TrainingForm {
   id?: string;
@@ -97,6 +98,7 @@ export class KcrpMededuTrainingEditor {
   @State() private registrationMessage = '';
   @State() private editingRegistrationId = '';
   @State() private trainingOptions: TrainingOption[] = [];
+  @State() private activeRole: UserRole = 'employee';
 
   async componentWillLoad() {
     await Promise.all([
@@ -287,13 +289,30 @@ export class KcrpMededuTrainingEditor {
   private renderRegistrationsSection() {
     const occupancy = Math.min(Math.round((this.form.occupied / Math.max(this.form.capacity, 1)) * 100), 100);
     const availableSeats = Math.max(this.form.capacity - this.form.occupied, 0);
+    const isHrMode = this.activeRole === 'hr';
 
     return (
-      <section class="registration-panel">
+      <section class={{ 'registration-panel': true, 'hr-mode': isHrMode }}>
         <div class="registration-header">
           <div>
             <h3>Registrácie</h3>
-            <p>Prihlasovanie zamestnancov, náhradníci a presun na iný termín</p>
+            <p>{isHrMode ? 'HR prehľad účastníkov, náhradníkov a presuny termínov' : 'Prihlásenie alebo úprava vlastnej registrácie na školenie'}</p>
+          </div>
+          <div class="role-switch" aria-label="Režim práce s registráciami">
+            <button
+              type="button"
+              class={{ active: this.activeRole === 'employee' }}
+              onClick={() => this.setRole('employee')}>
+              <md-icon>person</md-icon>
+              Zamestnanec
+            </button>
+            <button
+              type="button"
+              class={{ active: isHrMode }}
+              onClick={() => this.setRole('hr')}>
+              <md-icon>admin_panel_settings</md-icon>
+              HR
+            </button>
           </div>
           <div class="capacity-summary" aria-label="Obsadenosť školenia">
             <strong>{this.form.occupied}/{this.form.capacity}</strong>
@@ -312,6 +331,7 @@ export class KcrpMededuTrainingEditor {
         ) : undefined}
 
         <form class="registration-form" onSubmit={(event) => this.saveRegistration(event)}>
+          <h4>{isHrMode ? (this.editingRegistrationId ? 'Úprava účastníka' : 'Pridanie účastníka') : (this.editingRegistrationId ? 'Úprava mojej registrácie' : 'Moja registrácia')}</h4>
           <div class="grid">
             <md-outlined-text-field
               required
@@ -359,11 +379,15 @@ export class KcrpMededuTrainingEditor {
             <span class="stretch-fill"></span>
             <md-filled-button type="submit">
               <md-icon slot="icon">{this.editingRegistrationId ? 'save' : 'how_to_reg'}</md-icon>
-              {this.editingRegistrationId ? 'Uložiť registráciu' : 'Prihlásiť'}
+              {this.editingRegistrationId ? 'Uložiť registráciu' : (isHrMode ? 'Pridať účastníka' : 'Prihlásiť sa')}
             </md-filled-button>
           </div>
         </form>
 
+        <div class="participants-header">
+          <h4>{isHrMode ? 'Účastníci školenia' : 'Obsadenosť a poradie'}</h4>
+          <span>{this.registrations.length} spolu</span>
+        </div>
         <div class="participants" aria-label="Zoznam účastníkov školenia">
           {this.registrations.length === 0 ? (
             <div class="empty">Zatiaľ nie je prihlásený žiadny účastník.</div>
@@ -421,24 +445,28 @@ export class KcrpMededuTrainingEditor {
   }
 
   private renderRegistration(registration: Registration) {
+    const isHrMode = this.activeRole === 'hr';
+
     return (
-      <article class={{ participant: true, waitlisted: registration.status === 'waitlisted' }}>
+      <article class={{ participant: true, waitlisted: registration.status === 'waitlisted', compact: !isHrMode }}>
         <div>
           <strong>{registration.employeeName}</strong>
           <span>{registration.employeeId}{registration.department ? ` / ${registration.department}` : ''}</span>
           {registration.note ? <small>{registration.note}</small> : undefined}
         </div>
         <span class="status-chip">{this.registrationStatusLabel(registration.status)}</span>
-        <div class="participant-actions">
-          <md-outlined-button type="button" onClick={() => this.editRegistration(registration)}>
-            <md-icon slot="icon">edit</md-icon>
-            Upraviť
-          </md-outlined-button>
-          <md-filled-tonal-button type="button" onClick={() => this.deleteRegistration(registration)}>
-            <md-icon slot="icon">person_remove</md-icon>
-            Odhlásiť
-          </md-filled-tonal-button>
-        </div>
+        {isHrMode ? (
+          <div class="participant-actions">
+            <md-outlined-button type="button" onClick={() => this.editRegistration(registration)}>
+              <md-icon slot="icon">edit</md-icon>
+              Upraviť
+            </md-outlined-button>
+            <md-filled-tonal-button type="button" onClick={() => this.deleteRegistration(registration)}>
+              <md-icon slot="icon">person_remove</md-icon>
+              Odhlásiť
+            </md-filled-tonal-button>
+          </div>
+        ) : undefined}
       </article>
     );
   }
@@ -491,13 +519,15 @@ export class KcrpMededuTrainingEditor {
     try {
       if (!this.apiBase) {
         this.registrations = sampleRegistrations(this.trainingId);
+        this.syncFormCountsFromRegistrations();
         return;
       }
 
-      const registrations = await this.registrationsApi().listRegistrations({ trainingId: this.trainingId });
-      this.registrations = registrations.map(registration => this.fromApiRegistration(registration));
+      this.registrations = await this.listRegistrationsSafe();
+      this.syncFormCountsFromRegistrations();
     } catch (error: any) {
       this.registrations = sampleRegistrations(this.trainingId);
+      this.syncFormCountsFromRegistrations();
       this.errorMessage = `Nepodarilo sa načítať registrácie z API: ${this.apiErrorMessage(error)}`;
     }
   }
@@ -680,6 +710,11 @@ export class KcrpMededuTrainingEditor {
     this.registrationMessage = '';
   }
 
+  private setRole(role: UserRole) {
+    this.activeRole = role;
+    this.cancelRegistrationEdit();
+  }
+
   private async deleteRegistration(registration: Registration) {
     this.errorMessage = '';
     this.registrationMessage = '';
@@ -782,6 +817,20 @@ export class KcrpMededuTrainingEditor {
     return new DepartmentsApi(new Configuration({ basePath: this.apiBase.replace(/\/$/, '') }));
   }
 
+  private async listRegistrationsSafe(): Promise<Registration[]> {
+    const response = await fetch(`${this.apiBase.replace(/\/$/, '')}/trainings/${encodeURIComponent(this.trainingId)}/registrations`);
+    if (!response.ok) {
+      throw new ResponseError(response, 'Response returned an error code');
+    }
+
+    const payload = await response.json();
+    if (!Array.isArray(payload)) {
+      return [];
+    }
+
+    return payload.map(registration => this.fromApiRegistration(registration as ApiRegistration));
+  }
+
   private departmentOptions() {
     const currentDepartment = this.form.department.trim();
 
@@ -793,6 +842,8 @@ export class KcrpMededuTrainingEditor {
   }
 
   private fromApiTraining(training: ApiTraining): TrainingForm {
+    const counts = this.registrationCounts(training.registrations);
+
     return {
       id: training.id,
       title: training.title || '',
@@ -806,8 +857,8 @@ export class KcrpMededuTrainingEditor {
       description: training.description || '',
       requirements: training.requirements || '',
       status: (training.status || 'planned') as TrainingStatus,
-      occupied: Number(training.occupied || 0),
-      waitlisted: Number(training.waitlisted || 0),
+      occupied: counts?.occupied ?? Number(training.occupied || 0),
+      waitlisted: counts?.waitlisted ?? Number(training.waitlisted || 0),
     };
   }
 
@@ -889,6 +940,26 @@ export class KcrpMededuTrainingEditor {
         trainingId: this.trainingId,
         status: index < this.form.capacity ? 'registered' as RegistrationStatus : 'waitlisted' as RegistrationStatus,
       }));
+  }
+
+  private syncFormCountsFromRegistrations() {
+    const counts = this.registrationCounts(this.registrations) || { occupied: 0, waitlisted: 0 };
+    this.form = {
+      ...this.form,
+      occupied: counts.occupied,
+      waitlisted: counts.waitlisted,
+    };
+  }
+
+  private registrationCounts(registrations: Array<{ status?: string }> | undefined) {
+    if (!Array.isArray(registrations)) {
+      return undefined;
+    }
+
+    return {
+      occupied: registrations.filter(registration => registration.status === 'registered').length,
+      waitlisted: registrations.filter(registration => registration.status === 'waitlisted').length,
+    };
   }
 
   private toDatetimeLocal(value: Date | string): string {

@@ -25,7 +25,8 @@ header {
 
 h2,
 p,
-h3 {
+h3,
+h4 {
   margin: 0;
 }
 
@@ -68,6 +69,13 @@ form.registration-form {
   padding: 0;
 }
 
+form.registration-form h4,
+.participants-header h4 {
+  color: #334155;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
 .form-section {
   border-top: 1px solid #e7edf3;
   display: grid;
@@ -98,6 +106,44 @@ form.registration-form {
   display: flex;
   gap: 16px;
   justify-content: space-between;
+}
+
+.role-switch {
+  background: #f1f5f9;
+  border: 1px solid #dbe5ee;
+  border-radius: 8px;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  padding: 4px;
+}
+
+.role-switch button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+.role-switch button.active {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
+  color: var(--mededu-accent-strong);
+}
+
+.role-switch md-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
 }
 
 .capacity-summary {
@@ -151,7 +197,22 @@ form.registration-form {
 .participants {
   display: grid;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 8px;
+}
+
+.participants-header {
+  align-items: center;
+  border-top: 1px solid #e7edf3;
+  color: var(--mededu-muted);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.participants-header span {
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .participant {
@@ -162,6 +223,10 @@ form.registration-form {
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto auto;
   padding: 12px;
+}
+
+.participant.compact {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .participant.waitlisted {
@@ -300,7 +365,8 @@ md-filled-button {
 
   .registration-header,
   .registration-actions,
-  .participant-actions {
+  .participant-actions,
+  .role-switch {
     align-items: stretch;
     flex-direction: column;
   }

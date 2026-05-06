@@ -239,6 +239,8 @@ export class KcrpMededuTrainingList {
   }
 
   private fromApiTraining(training: ApiTraining): Training {
+    const counts = this.registrationCounts(training.registrations);
+
     return {
       id: training.id,
       title: training.title,
@@ -252,8 +254,19 @@ export class KcrpMededuTrainingList {
       description: training.description || '',
       requirements: training.requirements || '',
       status: (training.status || 'planned') as TrainingStatus,
-      occupied: Number(training.occupied || 0),
-      waitlisted: Number(training.waitlisted || 0),
+      occupied: counts?.occupied ?? Number(training.occupied || 0),
+      waitlisted: counts?.waitlisted ?? Number(training.waitlisted || 0),
+    };
+  }
+
+  private registrationCounts(registrations: Array<{ status?: string }> | undefined) {
+    if (!Array.isArray(registrations)) {
+      return undefined;
+    }
+
+    return {
+      occupied: registrations.filter(registration => registration.status === 'registered').length,
+      waitlisted: registrations.filter(registration => registration.status === 'waitlisted').length,
     };
   }
 
