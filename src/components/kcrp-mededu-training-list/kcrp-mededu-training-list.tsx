@@ -11,8 +11,10 @@ import '@material/web/list/list-item';
 import '@material/web/progress/linear-progress';
 import '@material/web/select/filled-select';
 import '@material/web/select/select-option';
+import '@material/web/textfield/filled-text-field';
 
 type TrainingStatus = 'planned' | 'cancelled' | 'archived';
+type CapacityFilter = '' | 'available' | 'full' | 'waitlisted';
 
 interface Training {
   id: string;
@@ -45,7 +47,11 @@ export class KcrpMededuTrainingList {
   @Event({ eventName: 'training-create-clicked' }) trainingCreateClicked: EventEmitter<void>;
 
   @State() private trainings: Training[] = [];
+  @State() private searchFilter = '';
   @State() private departmentFilter = '';
+  @State() private typeFilter = '';
+  @State() private statusFilter: '' | TrainingStatus = '';
+  @State() private capacityFilter: CapacityFilter = '';
   @State() private departments: string[] = sampleDepartments;
   @State() private loading = false;
   @State() private errorMessage = '';
@@ -84,6 +90,13 @@ export class KcrpMededuTrainingList {
         </header>
 
         <div class="toolbar">
+          <md-filled-text-field
+            label="Hľadať"
+            value={this.searchFilter}
+            onInput={(event: InputEvent) => this.searchFilter = this.eventValue(event)}>
+            <md-icon slot="leading-icon">search</md-icon>
+          </md-filled-text-field>
+
           <md-filled-select
             label="Oddelenie"
             value={this.departmentFilter}
@@ -99,11 +112,72 @@ export class KcrpMededuTrainingList {
             ))}
           </md-filled-select>
 
-          <md-filled-tonal-button onClick={() => this.loadTrainings()}>
-            <md-icon slot="icon">refresh</md-icon>
-            Obnoviť
-          </md-filled-tonal-button>
+          <md-filled-select
+            label="Typ"
+            value={this.typeFilter}
+            onInput={(event: InputEvent) => this.typeFilter = this.eventValue(event)}>
+            <md-icon slot="leading-icon">category</md-icon>
+            <md-select-option value="">
+              <div slot="headline">Všetky typy</div>
+            </md-select-option>
+            {trainingTypeOptions.map(option => (
+              <md-select-option value={option.value} selected={option.value === this.typeFilter}>
+                <div slot="headline">{option.label}</div>
+              </md-select-option>
+            ))}
+          </md-filled-select>
+
+          <md-filled-select
+            label="Stav"
+            value={this.statusFilter}
+            onInput={(event: InputEvent) => this.statusFilter = this.eventValue(event) as '' | TrainingStatus}>
+            <md-icon slot="leading-icon">event_available</md-icon>
+            <md-select-option value="">
+              <div slot="headline">Všetky stavy</div>
+            </md-select-option>
+            <md-select-option value="planned" selected={this.statusFilter === 'planned'}>
+              <div slot="headline">Plánované</div>
+            </md-select-option>
+            <md-select-option value="cancelled" selected={this.statusFilter === 'cancelled'}>
+              <div slot="headline">Zrušené</div>
+            </md-select-option>
+            <md-select-option value="archived" selected={this.statusFilter === 'archived'}>
+              <div slot="headline">Archivované</div>
+            </md-select-option>
+          </md-filled-select>
+
+          <md-filled-select
+            label="Kapacita"
+            value={this.capacityFilter}
+            onInput={(event: InputEvent) => this.capacityFilter = this.eventValue(event) as CapacityFilter}>
+            <md-icon slot="leading-icon">groups</md-icon>
+            <md-select-option value="">
+              <div slot="headline">Všetko</div>
+            </md-select-option>
+            <md-select-option value="available" selected={this.capacityFilter === 'available'}>
+              <div slot="headline">Voľné miesta</div>
+            </md-select-option>
+            <md-select-option value="full" selected={this.capacityFilter === 'full'}>
+              <div slot="headline">Plné</div>
+            </md-select-option>
+            <md-select-option value="waitlisted" selected={this.capacityFilter === 'waitlisted'}>
+              <div slot="headline">S náhradníkmi</div>
+            </md-select-option>
+          </md-filled-select>
+
+          <div class="filter-actions">
+            <md-filled-tonal-button onClick={() => this.resetFilters()} disabled={!this.hasActiveFilters()}>
+              <md-icon slot="icon">filter_alt_off</md-icon>
+              Zrušiť filtre
+            </md-filled-tonal-button>
+            <md-filled-tonal-button onClick={() => this.loadTrainings()}>
+              <md-icon slot="icon">refresh</md-icon>
+              Obnoviť
+            </md-filled-tonal-button>
+          </div>
         </div>
+
+        <div class="result-count">{visibleTrainings.length} z {this.trainings.length} školení</div>
 
         {this.loading ? <md-linear-progress indeterminate></md-linear-progress> : undefined}
         {this.errorMessage ? (
@@ -199,11 +273,70 @@ export class KcrpMededuTrainingList {
   }
 
   private filteredTrainings(): Training[] {
-    const filter = this.departmentFilter.trim().toLowerCase();
+    const search = this.normalize(this.searchFilter);
+    const department = this.normalize(this.departmentFilter);
+    const type = this.typeFilter.trim();
+    const status = this.statusFilter.trim();
+    const capacity = this.capacityFilter.trim();
+
     return this.trainings
-      .filter(training => training.status !== 'archived')
-      .filter(training => !filter || training.department.toLowerCase().includes(filter))
+      .filter(training => !search || this.trainingSearchText(training).includes(search))
+      .filter(training => !department || this.normalize(training.department).includes(department))
+      .filter(training => !type || training.type === type)
+      .filter(training => !status || training.status === status)
+      .filter(training => {
+        if (capacity === 'available') {
+          return training.status === 'planned' && training.occupied < training.capacity;
+        }
+        if (capacity === 'full') {
+          return training.occupied >= training.capacity;
+        }
+        if (capacity === 'waitlisted') {
+          return training.waitlisted > 0;
+        }
+        return true;
+      })
       .sort((left, right) => new Date(left.startAt).getTime() - new Date(right.startAt).getTime());
+  }
+
+  private trainingSearchText(training: Training) {
+    return this.normalize([
+      training.title,
+      training.department,
+      this.trainingTypeLabel(training.type),
+      this.statusLabel(training.status),
+      training.lecturer,
+      training.location || '',
+      training.onlineLink || '',
+      training.description || '',
+      training.requirements || '',
+    ].join(' '));
+  }
+
+  private normalize(value: string) {
+    return value
+      .toLocaleLowerCase('sk')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  private resetFilters() {
+    this.searchFilter = '';
+    this.departmentFilter = '';
+    this.typeFilter = '';
+    this.statusFilter = '';
+    this.capacityFilter = '';
+  }
+
+  private hasActiveFilters() {
+    return Boolean(
+      this.searchFilter ||
+      this.departmentFilter ||
+      this.typeFilter ||
+      this.statusFilter ||
+      this.capacityFilter,
+    );
   }
 
   private eventValue(event: InputEvent): string {
@@ -339,14 +472,91 @@ const sampleTrainings: Training[] = [
     type: 'department',
     department: 'JIS',
     startAt: '2026-06-02T12:30:00Z',
-    capacity: 1,
-    occupied: 1,
-    waitlisted: 1,
+    capacity: 2,
+    occupied: 2,
+    waitlisted: 2,
     lecturer: 'MUDr. Eva Hrubá',
     onlineLink: 'https://teams.example/mededu/icu-infection',
     requirements: 'Notebook alebo tablet',
     status: 'planned',
   },
+  {
+    id: 'pediatrics-onboarding-2026-06',
+    title: 'Adaptačné školenie pre pediatriu',
+    type: 'department',
+    department: 'Pediatria',
+    startAt: '2026-06-12T09:00:00Z',
+    capacity: 12,
+    occupied: 0,
+    waitlisted: 0,
+    lecturer: 'Mgr. Zuzana Farkašová',
+    location: 'Pavilón D, miestnosť 2.14',
+    requirements: 'Bez požiadaviek',
+    status: 'planned',
+  },
+  {
+    id: 'radiology-mri-2026-06',
+    title: 'MR bezpečnosť a kontrastné látky',
+    type: 'specialization',
+    department: 'Radiológia',
+    startAt: '2026-06-18T13:00:00Z',
+    capacity: 8,
+    occupied: 4,
+    waitlisted: 0,
+    lecturer: 'MUDr. Peter Oravec',
+    location: 'Radiológia, seminárna miestnosť',
+    requirements: 'Platné školenie BOZP',
+    status: 'planned',
+  },
+  {
+    id: 'anesthesia-airway-2026-06',
+    title: 'Ťažká intubácia a krízové postupy',
+    type: 'specialization',
+    department: 'Anestéziológia',
+    startAt: '2026-06-25T07:30:00Z',
+    capacity: 3,
+    occupied: 3,
+    waitlisted: 0,
+    lecturer: 'MUDr. Richard Urban',
+    location: 'Simulačné centrum',
+    requirements: 'Pracovné zaradenie na OAIM alebo urgentnom príjme',
+    status: 'planned',
+  },
+  {
+    id: 'surgery-teamwork-2026-07',
+    title: 'Simulačný tréning perioperačnej komunikácie',
+    type: 'department',
+    department: 'Chirurgia',
+    startAt: '2026-07-03T10:00:00Z',
+    capacity: 10,
+    occupied: 0,
+    waitlisted: 0,
+    lecturer: 'MUDr. Samuel Konečný',
+    location: 'Operačný trakt, tréningová sála',
+    requirements: 'Zaradenie v chirurgickom tíme',
+    status: 'cancelled',
+  },
+  {
+    id: 'gdpr-healthcare-2026-04',
+    title: 'Ochrana osobných údajov v zdravotníctve',
+    type: 'online',
+    department: 'Interné',
+    startAt: '2026-04-15T08:30:00Z',
+    capacity: 15,
+    occupied: 10,
+    waitlisted: 0,
+    lecturer: 'Mgr. Katarína Slámová',
+    onlineLink: 'https://teams.example/mededu/gdpr-healthcare',
+    requirements: 'Prístup do nemocničného e-learningu',
+    status: 'archived',
+  },
+];
+
+const trainingTypeOptions = [
+  { value: 'mandatory', label: 'Povinné' },
+  { value: 'department', label: 'Oddelenie' },
+  { value: 'specialization', label: 'Odbornosť' },
+  { value: 'online', label: 'Online' },
 ];
 
 const sampleDepartments = [

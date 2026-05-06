@@ -66,21 +66,35 @@ p,
 }
 
 .toolbar {
-  align-items: center;
   background: var(--mededu-panel);
   border: 1px solid var(--mededu-border);
   border-radius: 8px;
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
-  display: flex;
+  display: grid;
   gap: 12px;
-  justify-content: space-between;
+  grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(150px, 1fr)) auto;
   margin-top: 14px;
   padding: 12px;
 }
 
-md-filled-select {
-  max-width: 430px;
+md-filled-select,
+md-filled-text-field {
+  min-width: 0;
   width: 100%;
+}
+
+.filter-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.result-count {
+  color: var(--mededu-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 10px;
 }
 
 md-filled-button {
@@ -199,6 +213,13 @@ md-assist-chip {
   header,
   .toolbar {
     align-items: stretch;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  header {
     flex-direction: column;
   }
 
@@ -211,5 +232,10 @@ md-assist-chip {
 
   .chips {
     display: none;
+  }
+
+  .filter-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
