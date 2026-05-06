@@ -1,12 +1,13 @@
 :host {
-  --mededu-accent: #0f766e;
-  --mededu-accent-strong: #115e59;
-  --mededu-border: #d7dee8;
+  --mededu-accent: #0d9488;
+  --mededu-accent-strong: #0f766e;
+  --mededu-blue: #2563eb;
+  --mededu-border: #d8e1ea;
   --mededu-danger: #b42318;
-  --mededu-ink: #17212b;
-  --mededu-muted: #61717f;
+  --mededu-ink: #18212f;
+  --mededu-muted: #64748b;
   --mededu-panel: #ffffff;
-  --mededu-soft: #eef6f5;
+  --mededu-soft: #ecfdfb;
   color: var(--mededu-ink);
   display: block;
   font-family: Roboto, Arial, sans-serif;
@@ -14,13 +15,16 @@
 
 header {
   align-items: flex-start;
-  background: linear-gradient(135deg, #f8fbfb 0%, #eef6f5 58%, #f8fafc 100%);
+  background:
+    linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(37, 99, 235, 0.08)),
+    #ffffff;
   border: 1px solid var(--mededu-border);
-  border-radius: 8px;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.09);
   display: flex;
   justify-content: space-between;
-  padding: 18px;
+  gap: 16px;
+  padding: 22px;
 }
 
 h2,
@@ -53,13 +57,13 @@ header span {
 }
 
 form {
-  background: var(--mededu-panel);
-  border: 1px solid var(--mededu-border);
-  border-radius: 8px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   display: block;
   margin-top: 14px;
-  padding: 18px;
+  padding: 0;
 }
 
 form.registration-form {
@@ -77,15 +81,16 @@ form.registration-form h4,
 }
 
 .form-section {
-  border-top: 1px solid #e7edf3;
+  background: #fbfdff;
+  border: 1px solid #e7edf3;
+  border-radius: 12px;
   display: grid;
   gap: 14px;
-  padding-top: 18px;
+  padding: 16px;
 }
 
 .form-section:first-child {
-  border-top: 0;
-  padding-top: 0;
+  border-top: 1px solid #e7edf3;
 }
 
 .form-section + .form-section {
@@ -95,10 +100,10 @@ form.registration-form h4,
 .registration-panel {
   background: var(--mededu-panel);
   border: 1px solid var(--mededu-border);
-  border-radius: 8px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
   margin-top: 14px;
-  padding: 18px;
+  padding: 20px;
 }
 
 .registration-header {
@@ -148,7 +153,7 @@ form.registration-form h4,
 
 .capacity-summary {
   border: 1px solid #dbe5ee;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #475569;
   display: grid;
   gap: 5px;
@@ -218,7 +223,7 @@ form.registration-form h4,
 .participant {
   align-items: center;
   border: 1px solid #e7edf3;
-  border-radius: 8px;
+  border-radius: 12px;
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -268,7 +273,7 @@ form.registration-form h4,
 
 .empty {
   border: 1px dashed #cbd5e1;
-  border-radius: 8px;
+  border-radius: 12px;
   color: var(--mededu-muted);
   padding: 14px;
 }
@@ -294,9 +299,14 @@ h3 {
 
 md-outlined-text-field,
 md-outlined-select {
+  --md-outlined-field-container-color: #ffffff;
+  --md-outlined-field-input-text-color: var(--mededu-ink);
+  --md-outlined-field-label-text-color: #64748b;
+  --md-outlined-field-leading-icon-color: #64748b;
+  --md-outlined-field-outline-color: #cbd5e1;
   --md-outlined-field-focus-outline-color: var(--mededu-accent);
   --md-outlined-field-focus-label-text-color: var(--mededu-accent);
-  --md-outlined-field-container-shape: 8px;
+  --md-outlined-field-container-shape: 10px;
   width: 100%;
 }
 
@@ -307,7 +317,7 @@ md-outlined-select {
 .message {
   align-items: center;
   border: 1px solid var(--mededu-border);
-  border-radius: 8px;
+  border-radius: 12px;
   display: flex;
   gap: 8px;
   margin-top: 14px;
@@ -342,10 +352,11 @@ md-outlined-button,
 md-filled-tonal-button,
 md-filled-button {
   --md-filled-button-container-color: var(--mededu-accent);
-  --md-filled-button-container-shape: 8px;
-  --md-filled-tonal-button-container-shape: 8px;
+  --md-filled-button-container-shape: 10px;
+  --md-filled-tonal-button-container-color: #e8eef8;
+  --md-filled-tonal-button-container-shape: 10px;
   --md-filled-tonal-button-label-text-color: var(--mededu-danger);
-  --md-outlined-button-container-shape: 8px;
+  --md-outlined-button-container-shape: 10px;
   --md-outlined-button-outline-color: #b7c4d1;
 }
 

@@ -4,10 +4,7 @@ import { Configuration, DepartmentsApi, ResponseError, Training as ApiTraining, 
 
 import '@material/web/button/filled-button';
 import '@material/web/button/filled-tonal-button';
-import '@material/web/chips/assist-chip';
 import '@material/web/icon/icon';
-import '@material/web/list/list';
-import '@material/web/list/list-item';
 import '@material/web/progress/linear-progress';
 import '@material/web/select/filled-select';
 import '@material/web/select/select-option';
@@ -190,9 +187,9 @@ export class KcrpMededuTrainingList {
         {visibleTrainings.length === 0 ? (
           <div class="empty">Nenašli sa žiadne školenia pre zvolený filter.</div>
         ) : (
-          <md-list>
+          <div class="training-grid" aria-label="Zoznam školení">
             {visibleTrainings.map(training => this.renderTraining(training))}
-          </md-list>
+          </div>
         )}
       </Host>
     );
@@ -203,38 +200,49 @@ export class KcrpMededuTrainingList {
     const place = training.location || training.onlineLink || 'miesto bude doplnené';
     const occupancy = Math.min(Math.round((training.occupied / training.capacity) * 100), 100);
     const isFull = training.occupied >= training.capacity;
+    const href = this.trainingHref(training.id);
+    const freeSeats = Math.max(training.capacity - training.occupied, 0);
 
     return (
-      <md-list-item href={this.trainingHref(training.id) || undefined} onClick={() => this.openTraining(training.id)}>
-        <md-icon slot="start">{training.onlineLink ? 'video_call' : 'school'}</md-icon>
-        <div slot="headline">{training.title}</div>
-        <div slot="supporting-text">
-          <span class="department">{training.department}</span>
-          <span>{this.trainingTypeLabel(training.type)}</span>
-          <span>{startsAt.toLocaleString()}</span>
-          <span>{place}</span>
-          <span>lektor: {training.lecturer}</span>
+      <a
+        class={{ 'training-card': true, cancelled: training.status === 'cancelled', archived: training.status === 'archived' }}
+        href={href || '#'}
+        onClick={(event) => this.openTraining(event, training.id)}>
+        <div class="card-topline">
+          <span class="icon-badge">
+            <md-icon>{training.onlineLink ? 'video_call' : 'school'}</md-icon>
+          </span>
+          <span class={{ 'status-pill': true, [training.status]: true }}>{this.statusLabel(training.status)}</span>
         </div>
-        <div slot="end" class="chips">
-          <div class={{ occupancy: true, full: isFull }}>
-            <span>{training.occupied}/{training.capacity}</span>
+
+        <div class="card-main">
+          <h3>{training.title}</h3>
+          <p>{training.description || training.requirements || 'Detail školenia bude doplnený.'}</p>
+        </div>
+
+        <div class="training-meta">
+          <span><md-icon>local_hospital</md-icon>{training.department}</span>
+          <span><md-icon>category</md-icon>{this.trainingTypeLabel(training.type)}</span>
+          <span><md-icon>event</md-icon>{this.formatDateTime(startsAt)}</span>
+          <span><md-icon>{training.onlineLink ? 'link' : 'meeting_room'}</md-icon>{place}</span>
+          <span><md-icon>person</md-icon>{training.lecturer}</span>
+        </div>
+
+        <div class="card-footer">
+          <div class={{ occupancy: true, full: isFull, waitlisted: training.waitlisted > 0 }}>
+            <div>
+              <strong>{training.occupied}/{training.capacity}</strong>
+              <span>{training.waitlisted > 0 ? `${training.waitlisted} náhradníci` : isFull ? 'kapacita naplnená' : `${freeSeats} voľné miesta`}</span>
+            </div>
             <div class="meter" aria-label={`Obsadenosť ${occupancy} percent`}>
               <span style={{ width: `${occupancy}%` }}></span>
             </div>
           </div>
-          <md-assist-chip label={isFull ? 'plné' : `${training.capacity - training.occupied} voľné`}>
-            <md-icon slot="icon">groups</md-icon>
-          </md-assist-chip>
-          <md-assist-chip label={this.statusLabel(training.status)}>
-            <md-icon slot="icon">{training.status === 'planned' ? 'event_available' : 'event_busy'}</md-icon>
-          </md-assist-chip>
-          {training.waitlisted > 0 ? (
-            <md-assist-chip label={`${training.waitlisted} náhrad.`}>
-              <md-icon slot="icon">pending</md-icon>
-            </md-assist-chip>
-          ) : undefined}
+          <span class={{ 'capacity-pill': true, full: isFull, waitlisted: training.waitlisted > 0 }}>
+            {training.waitlisted > 0 ? 'čakacia listina' : isFull ? 'plné' : 'dostupné'}
+          </span>
         </div>
-      </md-list-item>
+      </a>
     );
   }
 
@@ -349,8 +357,9 @@ export class KcrpMededuTrainingList {
     }
   }
 
-  private openTraining(trainingId: string) {
+  private openTraining(event: MouseEvent, trainingId: string) {
     if (!this.trainingHrefBase) {
+      event.preventDefault();
       this.trainingClicked.emit(trainingId);
     }
   }
@@ -421,12 +430,22 @@ export class KcrpMededuTrainingList {
   private statusLabel(status: TrainingStatus) {
     switch (status) {
       case 'cancelled':
-        return 'zrušené';
+        return 'Zrušené';
       case 'archived':
-        return 'archív';
+        return 'Archivované';
       default:
-        return 'plánované';
+        return 'Plánované';
     }
+  }
+
+  private formatDateTime(value: Date) {
+    return new Intl.DateTimeFormat('sk-SK', {
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(value);
   }
 
   private toIsoDate(value: Date | string | undefined): string {
