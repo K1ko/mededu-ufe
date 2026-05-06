@@ -4,3 +4,71 @@
   padding: 8px;
   width: 100%;
 }
+
+.role-bar {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d8e1ea;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  color: #64748b;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+}
+
+.role-bar > span {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.role-switch {
+  background: #f1f5f9;
+  border: 1px solid #dbe5ee;
+  border-radius: 10px;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+}
+
+.role-switch button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.role-switch button.active {
+  background: #ffffff;
+  box-shadow: 0 1px 5px rgba(15, 23, 42, 0.16);
+  color: #0f766e;
+}
+
+.role-switch md-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+@media (max-width: 760px) {
+  .role-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .role-switch {
+    flex-direction: column;
+  }
+}

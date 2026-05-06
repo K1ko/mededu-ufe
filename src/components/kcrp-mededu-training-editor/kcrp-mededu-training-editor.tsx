@@ -82,6 +82,7 @@ export class KcrpMededuTrainingEditor {
   @Prop({ attribute: 'training-id' }) trainingId = '@new';
   @Prop() apiBase = '';
   @Prop() backHref = '';
+  @Prop({ attribute: 'user-role' }) userRole: 'employee' | 'hr' = 'hr';
 
   @StencilEvent({ eventName: 'training-saved' }) trainingSaved: EventEmitter<TrainingForm>;
   @StencilEvent({ eventName: 'training-cancelled' }) trainingCancelled: EventEmitter<void>;
@@ -98,7 +99,6 @@ export class KcrpMededuTrainingEditor {
   @State() private registrationMessage = '';
   @State() private editingRegistrationId = '';
   @State() private trainingOptions: TrainingOption[] = [];
-  @State() private activeRole: UserRole = 'employee';
 
   async componentWillLoad() {
     await Promise.all([
@@ -111,15 +111,20 @@ export class KcrpMededuTrainingEditor {
 
   render() {
     const isNew = this.trainingId === '@new';
+    const canManageTrainings = this.canManageTrainings();
+
+    if (isNew && !canManageTrainings) {
+      return this.renderLockedCreate();
+    }
 
     return (
       <Host>
         <header>
           <div>
-            <h2>{isNew ? 'Nové školenie' : 'Úprava školenia'}</h2>
-            <p>{isNew ? 'Vytvorenie položky v katalógu interného vzdelávania' : 'Aktualizácia termínu, kapacity a organizačných údajov'}</p>
+            <h2>{isNew ? 'Nové školenie' : canManageTrainings ? 'Úprava školenia' : 'Detail školenia'}</h2>
+            <p>{isNew ? 'Vytvorenie položky v katalógu interného vzdelávania' : canManageTrainings ? 'Aktualizácia termínu, kapacity a organizačných údajov' : 'Termín, miesto, kapacita a požiadavky na školenie'}</p>
           </div>
-          <span>{isNew ? 'Nový záznam' : this.form.status}</span>
+          <span>{isNew ? 'Nový záznam' : canManageTrainings ? 'HR správa' : 'Len čítanie'}</span>
         </header>
 
         {this.loading ? <md-linear-progress indeterminate></md-linear-progress> : undefined}
@@ -144,6 +149,7 @@ export class KcrpMededuTrainingEditor {
             <div class="grid">
             <md-outlined-text-field
               required
+              readOnly={!canManageTrainings}
               label="Názov školenia"
               value={this.form.title}
               onInput={(event: InputEvent) => this.updateField('title', this.eventValue(event))}>
@@ -152,6 +158,7 @@ export class KcrpMededuTrainingEditor {
 
             <md-outlined-select
               required
+              disabled={!canManageTrainings}
               label="Typ školenia"
               value={this.form.type}
               onInput={(event: InputEvent) => this.updateField('type', this.eventValue(event))}>
@@ -169,7 +176,7 @@ export class KcrpMededuTrainingEditor {
               </md-select-option>
             </md-outlined-select>
 
-            {this.renderDepartmentField()}
+            {this.renderDepartmentField(canManageTrainings)}
             </div>
           </section>
 
@@ -179,6 +186,7 @@ export class KcrpMededuTrainingEditor {
             <md-outlined-text-field
               required
               type="datetime-local"
+              readOnly={!canManageTrainings}
               label="Termín školenia"
               value={this.form.startAt}
               onInput={(event: InputEvent) => this.updateField('startAt', this.eventValue(event))}>
@@ -189,6 +197,7 @@ export class KcrpMededuTrainingEditor {
               required
               min="1"
               type="number"
+              readOnly={!canManageTrainings}
               label="Kapacita"
               value={String(this.form.capacity)}
               onInput={(event: InputEvent) => this.updateField('capacity', Number(this.eventValue(event)))}>
@@ -197,6 +206,7 @@ export class KcrpMededuTrainingEditor {
 
             <md-outlined-text-field
               required
+              readOnly={!canManageTrainings}
               label="Lektor"
               value={this.form.lecturer}
               onInput={(event: InputEvent) => this.updateField('lecturer', this.eventValue(event))}>
@@ -204,6 +214,7 @@ export class KcrpMededuTrainingEditor {
             </md-outlined-text-field>
 
             <md-outlined-text-field
+              readOnly={!canManageTrainings}
               label="Miesto"
               value={this.form.location}
               onInput={(event: InputEvent) => this.updateField('location', this.eventValue(event))}>
@@ -211,6 +222,7 @@ export class KcrpMededuTrainingEditor {
             </md-outlined-text-field>
 
             <md-outlined-text-field
+              readOnly={!canManageTrainings}
               label="Online link"
               value={this.form.onlineLink}
               onInput={(event: InputEvent) => this.updateField('onlineLink', this.eventValue(event))}>
@@ -223,6 +235,7 @@ export class KcrpMededuTrainingEditor {
             <h3>Stav a požiadavky</h3>
             <div class="grid single">
             <md-outlined-select
+              disabled={!canManageTrainings}
               label="Stav"
               value={this.form.status}
               onInput={(event: InputEvent) => this.updateField('status', this.eventValue(event) as TrainingStatus)}>
@@ -242,6 +255,7 @@ export class KcrpMededuTrainingEditor {
             class="wide"
             type="textarea"
             rows="3"
+            readOnly={!canManageTrainings}
             label="Popis"
             value={this.form.description}
             onInput={(event: InputEvent) => this.updateField('description', this.eventValue(event))}>
@@ -251,6 +265,7 @@ export class KcrpMededuTrainingEditor {
             class="wide"
             type="textarea"
             rows="3"
+            readOnly={!canManageTrainings}
             label="Požiadavky"
             value={this.form.requirements}
             onInput={(event: InputEvent) => this.updateField('requirements', this.eventValue(event))}>
@@ -258,13 +273,13 @@ export class KcrpMededuTrainingEditor {
           </section>
 
           <div class="actions">
-            {!isNew ? (
-              <md-filled-tonal-button type="button" onClick={() => this.deleteTraining()}>
+            {canManageTrainings && !isNew ? (
+              <md-filled-tonal-button class="danger-button" type="button" onClick={() => this.deleteTraining()}>
                 <md-icon slot="icon">delete</md-icon>
                 Odstrániť
               </md-filled-tonal-button>
             ) : undefined}
-            {!isNew ? (
+            {canManageTrainings && !isNew ? (
               <md-outlined-button type="button" onClick={() => this.archiveTraining()}>
                 <md-icon slot="icon">archive</md-icon>
                 Archivovať
@@ -274,10 +289,12 @@ export class KcrpMededuTrainingEditor {
             <md-outlined-button type="button" href={this.backHref || undefined} onClick={() => this.cancelTraining()}>
               Späť
             </md-outlined-button>
-            <md-filled-button type="submit">
-              <md-icon slot="icon">save</md-icon>
-              Uložiť
-            </md-filled-button>
+            {canManageTrainings ? (
+              <md-filled-button type="submit">
+                <md-icon slot="icon">save</md-icon>
+                Uložiť
+              </md-filled-button>
+            ) : undefined}
           </div>
         </form>
 
@@ -286,10 +303,34 @@ export class KcrpMededuTrainingEditor {
     );
   }
 
+  private renderLockedCreate() {
+    return (
+      <Host>
+        <header>
+          <div>
+            <h2>Nové školenie</h2>
+            <p>Vytvorenie a úprava školení je dostupná iba v režime HR.</p>
+          </div>
+          <span>Len HR</span>
+        </header>
+        <div class="message error">
+          <md-icon>lock</md-icon>
+          <span>Prepnite režim na HR, ak chcete vytvoriť nové školenie.</span>
+        </div>
+        <div class="actions standalone">
+          <span class="stretch-fill"></span>
+          <md-outlined-button type="button" href={this.backHref || undefined} onClick={() => this.cancelTraining()}>
+            Späť
+          </md-outlined-button>
+        </div>
+      </Host>
+    );
+  }
+
   private renderRegistrationsSection() {
     const occupancy = Math.min(Math.round((this.form.occupied / Math.max(this.form.capacity, 1)) * 100), 100);
     const availableSeats = Math.max(this.form.capacity - this.form.occupied, 0);
-    const isHrMode = this.activeRole === 'hr';
+    const isHrMode = this.userRole === 'hr';
 
     return (
       <section class={{ 'registration-panel': true, 'hr-mode': isHrMode }}>
@@ -297,22 +338,6 @@ export class KcrpMededuTrainingEditor {
           <div>
             <h3>Registrácie</h3>
             <p>{isHrMode ? 'HR prehľad účastníkov, náhradníkov a presuny termínov' : 'Prihlásenie alebo úprava vlastnej registrácie na školenie'}</p>
-          </div>
-          <div class="role-switch" aria-label="Režim práce s registráciami">
-            <button
-              type="button"
-              class={{ active: this.activeRole === 'employee' }}
-              onClick={() => this.setRole('employee')}>
-              <md-icon>person</md-icon>
-              Zamestnanec
-            </button>
-            <button
-              type="button"
-              class={{ active: isHrMode }}
-              onClick={() => this.setRole('hr')}>
-              <md-icon>admin_panel_settings</md-icon>
-              HR
-            </button>
           </div>
           <div class="capacity-summary" aria-label="Obsadenosť školenia">
             <strong>{this.form.occupied}/{this.form.capacity}</strong>
@@ -445,7 +470,7 @@ export class KcrpMededuTrainingEditor {
   }
 
   private renderRegistration(registration: Registration) {
-    const isHrMode = this.activeRole === 'hr';
+    const isHrMode = this.userRole === 'hr';
 
     return (
       <article class={{ participant: true, waitlisted: registration.status === 'waitlisted', compact: !isHrMode }}>
@@ -552,10 +577,11 @@ export class KcrpMededuTrainingEditor {
     }
   }
 
-  private renderDepartmentField() {
+  private renderDepartmentField(canManageTrainings: boolean) {
     return (
       <md-outlined-select
         required
+        disabled={!canManageTrainings}
         label="Oddelenie / odbornosť"
         value={this.form.department}
         onInput={(event: InputEvent) => this.updateField('department', this.eventValue(event))}>
@@ -573,6 +599,11 @@ export class KcrpMededuTrainingEditor {
     event.preventDefault();
     this.errorMessage = '';
     this.savedMessage = '';
+
+    if (!this.canManageTrainings()) {
+      this.errorMessage = 'Úprava školenia je dostupná iba v režime HR.';
+      return;
+    }
 
     if (!this.form.location.trim() && !this.form.onlineLink.trim()) {
       this.errorMessage = 'Vyplňte miesto alebo online link školenia.';
@@ -610,6 +641,10 @@ export class KcrpMededuTrainingEditor {
   }
 
   private async archiveTraining() {
+    if (!this.canManageTrainings()) {
+      return;
+    }
+
     this.form = { ...this.form, status: 'archived' };
     await this.saveTraining(new Event('submit'));
     this.trainingArchived.emit(this.trainingId);
@@ -619,7 +654,7 @@ export class KcrpMededuTrainingEditor {
     this.errorMessage = '';
     this.savedMessage = '';
 
-    if (this.trainingId === '@new') {
+    if (this.trainingId === '@new' || !this.canManageTrainings()) {
       return;
     }
 
@@ -710,11 +745,6 @@ export class KcrpMededuTrainingEditor {
     this.registrationMessage = '';
   }
 
-  private setRole(role: UserRole) {
-    this.activeRole = role;
-    this.cancelRegistrationEdit();
-  }
-
   private async deleteRegistration(registration: Registration) {
     this.errorMessage = '';
     this.registrationMessage = '';
@@ -774,6 +804,10 @@ export class KcrpMededuTrainingEditor {
     if (!this.backHref) {
       this.trainingCancelled.emit();
     }
+  }
+
+  private canManageTrainings() {
+    return this.userRole === 'hr';
   }
 
   private emptyTraining(): TrainingForm {

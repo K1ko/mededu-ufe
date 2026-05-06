@@ -7,11 +7,12 @@
 
 ## Properties
 
-| Property     | Attribute     | Description | Type     | Default  |
-| ------------ | ------------- | ----------- | -------- | -------- |
-| `apiBase`    | `api-base`    |             | `string` | `''`     |
-| `backHref`   | `back-href`   |             | `string` | `''`     |
-| `trainingId` | `training-id` |             | `string` | `'@new'` |
+| Property     | Attribute     | Description | Type                 | Default  |
+| ------------ | ------------- | ----------- | -------------------- | -------- |
+| `apiBase`    | `api-base`    |             | `string`             | `''`     |
+| `backHref`   | `back-href`   |             | `string`             | `''`     |
+| `trainingId` | `training-id` |             | `string`             | `'@new'` |
+| `userRole`   | `user-role`   |             | `"employee" \| "hr"` | `'hr'`   |
 
 
 ## Events

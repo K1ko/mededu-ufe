@@ -344,6 +344,10 @@ md-outlined-select {
   padding-top: 16px;
 }
 
+.actions.standalone {
+  border-top: 0;
+}
+
 .stretch-fill {
   flex: 1 1 auto;
 }
@@ -353,11 +357,26 @@ md-filled-tonal-button,
 md-filled-button {
   --md-filled-button-container-color: var(--mededu-accent);
   --md-filled-button-container-shape: 10px;
+  --md-filled-button-icon-color: #ffffff;
+  --md-filled-button-label-text-color: #ffffff;
   --md-filled-tonal-button-container-color: #e8eef8;
   --md-filled-tonal-button-container-shape: 10px;
+  --md-filled-tonal-button-icon-color: var(--mededu-danger);
   --md-filled-tonal-button-label-text-color: var(--mededu-danger);
   --md-outlined-button-container-shape: 10px;
+  --md-outlined-button-icon-color: #1d4ed8;
+  --md-outlined-button-label-text-color: #1d4ed8;
   --md-outlined-button-outline-color: #b7c4d1;
+}
+
+md-filled-tonal-button.danger-button {
+  --md-filled-tonal-button-container-color: #fff1f0;
+  --md-filled-tonal-button-icon-color: var(--mededu-danger);
+  --md-filled-tonal-button-label-text-color: var(--mededu-danger);
+}
+
+md-filled-tonal-button.danger-button md-icon {
+  color: var(--mededu-danger);
 }
 
 @media (max-width: 760px) {

@@ -7,11 +7,12 @@
 
 ## Properties
 
-| Property           | Attribute            | Description | Type     | Default |
-| ------------------ | -------------------- | ----------- | -------- | ------- |
-| `apiBase`          | `api-base`           |             | `string` | `''`    |
-| `createHref`       | `create-href`        |             | `string` | `''`    |
-| `trainingHrefBase` | `training-href-base` |             | `string` | `''`    |
+| Property           | Attribute            | Description | Type                 | Default |
+| ------------------ | -------------------- | ----------- | -------------------- | ------- |
+| `apiBase`          | `api-base`           |             | `string`             | `''`    |
+| `createHref`       | `create-href`        |             | `string`             | `''`    |
+| `trainingHrefBase` | `training-href-base` |             | `string`             | `''`    |
+| `userRole`         | `user-role`          |             | `"employee" \| "hr"` | `'hr'`  |
 
 
 ## Events

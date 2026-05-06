@@ -39,6 +39,7 @@ export class KcrpMededuTrainingList {
   @Prop() apiBase = '';
   @Prop() createHref = '';
   @Prop() trainingHrefBase = '';
+  @Prop({ attribute: 'user-role' }) userRole: 'employee' | 'hr' = 'hr';
 
   @Event({ eventName: 'training-clicked' }) trainingClicked: EventEmitter<string>;
   @Event({ eventName: 'training-create-clicked' }) trainingCreateClicked: EventEmitter<void>;
@@ -66,6 +67,7 @@ export class KcrpMededuTrainingList {
     const freeSeats = this.trainings.reduce((sum, training) => sum + Math.max(training.capacity - training.occupied, 0), 0);
     const waitlisted = this.trainings.reduce((sum, training) => sum + training.waitlisted, 0);
     const registered = this.trainings.reduce((sum, training) => sum + training.occupied + training.waitlisted, 0);
+    const canManageTrainings = this.userRole === 'hr';
 
     return (
       <Host>
@@ -80,10 +82,12 @@ export class KcrpMededuTrainingList {
             <span><strong>{registered}</strong> registrácie</span>
             <span><strong>{waitlisted}</strong> náhradníci</span>
           </div>
-          <md-filled-button href={this.createHref || undefined} onClick={() => this.createTraining()}>
-            <md-icon slot="icon">add</md-icon>
-            Nové školenie
-          </md-filled-button>
+          {canManageTrainings ? (
+            <md-filled-button href={this.createHref || undefined} onClick={() => this.createTraining()}>
+              <md-icon slot="icon">add</md-icon>
+              Nové školenie
+            </md-filled-button>
+          ) : undefined}
         </header>
 
         <div class="toolbar">

@@ -21,6 +21,10 @@ export namespace Components {
           * @default '@new'
          */
         "trainingId": string;
+        /**
+          * @default 'hr'
+         */
+        "userRole": 'employee' | 'hr';
     }
     interface KcrpMededuTrainingList {
         /**
@@ -35,6 +39,10 @@ export namespace Components {
           * @default ''
          */
         "trainingHrefBase": string;
+        /**
+          * @default 'hr'
+         */
+        "userRole": 'employee' | 'hr';
     }
     interface KcrpMededuTrainingsApp {
         /**
@@ -124,6 +132,10 @@ declare namespace LocalJSX {
           * @default '@new'
          */
         "trainingId"?: string;
+        /**
+          * @default 'hr'
+         */
+        "userRole"?: 'employee' | 'hr';
     }
     interface KcrpMededuTrainingList {
         /**
@@ -140,6 +152,10 @@ declare namespace LocalJSX {
           * @default ''
          */
         "trainingHrefBase"?: string;
+        /**
+          * @default 'hr'
+         */
+        "userRole"?: 'employee' | 'hr';
     }
     interface KcrpMededuTrainingsApp {
         /**
@@ -156,11 +172,13 @@ declare namespace LocalJSX {
         "trainingId": string;
         "apiBase": string;
         "backHref": string;
+        "userRole": 'employee' | 'hr';
     }
     interface KcrpMededuTrainingListAttributes {
         "apiBase": string;
         "createHref": string;
         "trainingHrefBase": string;
+        "userRole": 'employee' | 'hr';
     }
     interface KcrpMededuTrainingsAppAttributes {
         "basePath": string;

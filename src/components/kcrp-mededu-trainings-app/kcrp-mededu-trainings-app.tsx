@@ -2,6 +2,10 @@ import { Component, Host, Prop, State, h } from '@stencil/core';
 
 import { registerNavigationApi } from '../../global/navigation';
 
+import '@material/web/icon/icon';
+
+type UserRole = 'employee' | 'hr';
+
 type NavigateEventLike = Event & {
   canIntercept?: boolean;
   destination?: {
@@ -24,6 +28,7 @@ export class KcrpMededuTrainingsApp {
   @Prop({ attribute: 'api-base' }) apiBase = '';
 
   @State() private relativePath = '';
+  @State() private userRole: UserRole = 'employee';
 
   private removeNavigationListener?: () => void;
 
@@ -49,8 +54,33 @@ export class KcrpMededuTrainingsApp {
 
     return (
       <Host>
+        {this.renderRoleSwitcher()}
         {editorMatch ? this.renderEditor(editorMatch[1]) : this.renderList()}
       </Host>
+    );
+  }
+
+  private renderRoleSwitcher() {
+    return (
+      <div class="role-bar" aria-label="Režim používania aplikácie">
+        <span>Režim</span>
+        <div class="role-switch">
+          <button
+            type="button"
+            class={{ active: this.userRole === 'employee' }}
+            onClick={() => this.userRole = 'employee'}>
+            <md-icon>person</md-icon>
+            Zamestnanec
+          </button>
+          <button
+            type="button"
+            class={{ active: this.userRole === 'hr' }}
+            onClick={() => this.userRole = 'hr'}>
+            <md-icon>admin_panel_settings</md-icon>
+            HR
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -60,6 +90,7 @@ export class KcrpMededuTrainingsApp {
         apiBase={this.apiBase}
         createHref={this.pathInApplication('training/@new')}
         trainingHrefBase={this.pathInApplication('training')}
+        user-role={this.userRole}
         onTraining-clicked={(event: CustomEvent<string>) => this.navigate(`training/${event.detail}`)}
         onTraining-create-clicked={() => this.navigate('training/@new')}
       ></kcrp-mededu-training-list>
@@ -72,6 +103,7 @@ export class KcrpMededuTrainingsApp {
         trainingId={decodeURIComponent(trainingId)}
         apiBase={this.apiBase}
         backHref={this.pathInApplication('')}
+        user-role={this.userRole}
         onTraining-cancelled={() => this.navigate('')}
         onTraining-saved={() => this.navigate('')}
         onTraining-archived={() => this.navigate('')}
